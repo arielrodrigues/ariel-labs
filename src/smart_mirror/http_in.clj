@@ -6,3 +6,8 @@
   {:status 200
    :headers {"Content-Type" "application/json"}
    :body (controller/foo request nil)})
+
+(def route-map
+  ["/version" {:get {:handler foo-handler}}
+   "/health" {:get {:handler foo-handler}}
+   "/metrics" {:get {:handler foo-handler}}])
