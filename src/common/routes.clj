@@ -38,7 +38,7 @@
                         keyword)]
     [prefixed-path method handler :route-name method+path]))
 
-(defn expand-route-map!*
+(defn- expand-route-map!*
   [[path http-methods]]
   (map (partial path+method->pedestal-route! path) http-methods))
 
