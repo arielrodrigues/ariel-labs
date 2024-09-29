@@ -1,8 +1,37 @@
 (ns common.routes
-  (:require [io.pedestal.http.route :as io.route]))
+  (:require [clojure.spec.alpha :as s]
+            [clojure.spec.gen.alpha :as gen]
+            [clojure.string]
+            [common.interceptors :as common-interceptors]
+            [io.pedestal.http.route :as io.route]))
 
 (def valid-http-methods
-  #{:get :post :put :patch :delete :options :head :trace :connect})
+  #{:get :post :put :patch :delete :options :head})
+(s/def ::valid-http-methods valid-http-methods)
+
+(s/def ::handler (s/spec ifn?
+                         :gen #(gen/return identity)))
+
+(s/def ::method-map
+  (s/keys :req-un [::handler]))
+
+(s/def ::path-map
+  (s/map-of ::valid-http-methods ::method-map))
+
+(s/def ::path
+  (s/with-gen (s/and string?
+                     (complement empty?)
+                     #(clojure.string/starts-with? % "/"))
+    (fn [] (gen/fmap (partial str "/") (gen/string-alphanumeric)))))
+
+(s/def ::route-def
+  (s/cat :path ::path :path-map ::path-map))
+
+(s/def ::routes (s/* ::route-def))
+
+(s/fdef valid-http-method?
+  :args keyword?
+  :ret boolean?)
 
 (defn- valid-http-method?
   [method]
@@ -38,14 +67,31 @@
                         keyword)]
     [prefixed-path method handler :route-name method+path]))
 
-(defn- expand-route-map!*
+(defn- expand-routes!*
   [[path http-methods]]
   (map (partial path+method->pedestal-route! path) http-methods))
 
-(defn expand-route-map!
-  [route-map]
-  (->> route-map
+(s/def ::route-name keyword?)
+(s/def ::method ::valid-http-methods)
+(s/def ::interceptors ::common-interceptors/interceptors)
+(s/def ::path-params  (s/* (s/cat :key keyword? :val string?)))
+
+(s/def ::expanded-routes
+  (s/coll-of
+   (s/keys :req-un [::path
+                    ::route-name
+                    ::method
+                    ::interceptors
+                    ::path-params])))
+
+(s/fdef expand-routes!
+  :args (s/cat :routes ::routes)
+  :ret ::expanded-routes)
+
+(defn expand-routes!
+  [routes]
+  (->> routes
        (partition 2)
-       (mapcat expand-route-map!*)
+       (mapcat expand-routes!*)
        set
        io.route/expand-routes))
