@@ -1,7 +1,7 @@
 (ns common.http-server
-  (:require [io.pedestal.http :as http]
-            [common.routes :refer [expand-route-map!]]
-            [com.stuartsierra.component :as component]))
+  (:require [com.stuartsierra.component :as component]
+            [common.routes :refer [expand-routes!]]
+            [io.pedestal.http :as http]))
 
 (def DEFAULT-SERVER-PORT 8080)
 
@@ -9,13 +9,13 @@
   component/Lifecycle
 
   (start [component]
-    (let [service-map {::http/routes (expand-route-map! routes)
+    (let [service-map {::http/routes (expand-routes! routes)
                        ::http/type :jetty
                        ::http/port port}
           instance (-> service-map
-              (assoc ::http/join? false)
-              http/create-server
-              http/start)]
+                       (assoc ::http/join? false)
+                       http/create-server
+                       http/start)]
       (assoc component :server instance)))
 
   (stop [component]
