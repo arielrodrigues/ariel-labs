@@ -5,5 +5,6 @@
         org.slf4j/slf4j-simple     {:mvn/version "2.0.10"}
         com.stuartsierra/component {:mvn/version "1.1.0"}
         org.clojure/test.check {:mvn/version "1.1.1"}
+        clojure.java-time/clojure.java-time {:mvn/version "1.4.2"}
         nubank/state-flow {:mvn/version "5.18.0"}
         nubank/matcher-combinators {:mvn/version "3.9.1"}}}
