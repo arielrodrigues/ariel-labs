@@ -1,17 +1,17 @@
 (ns smart-mirror.http-in
-  (:require [common.time :as time]
-            [smart-mirror.controller :as controller]))
+  (:require
+   [common.interceptors :as common.interceptors]
+   [common.time :as time]
+   [smart-mirror.controller :as controller]))
 
 (defn foo-handler
   [request]
   {:status 200
-   :headers {"Content-Type" "application/json"}
    :body (controller/foo request nil)})
 
-(defn now-handler
+(defn now!
   [request]
   {:status 200
-   :headers {"Content-Type" "application/json"}
    :body (controller/now request (time/now))})
 
 (def base-routes
@@ -19,6 +19,10 @@
    "/health" {:get {:handler foo-handler}}
    "/metrics" {:get {:handler foo-handler}}])
 
+(def routes
+  ["/now" {:get {:handler now!}}])
+
 (def route-map
-  (merge ["/now" {:get {:handler now-handler}}]
-         base-routes))
+  (-> routes
+      (concat base-routes)
+      common.interceptors/routes->routes+common-interceptors))

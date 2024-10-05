@@ -2,15 +2,17 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
             [clojure.string]
-            [common.interceptors :as common-interceptors]
+            [common.interceptors :as common.interceptors]
             [io.pedestal.http.route :as io.route]))
 
 (def valid-http-methods
   #{:get :post :put :patch :delete :options :head})
 (s/def ::valid-http-methods valid-http-methods)
 
+(def default-handler identity)
+
 (s/def ::handler (s/spec ifn?
-                         :gen #(gen/return identity)))
+                         :gen #(gen/return default-handler)))
 
 (s/def ::method-map
   (s/keys :req-un [::handler]))
@@ -73,7 +75,7 @@
 
 (s/def ::route-name keyword?)
 (s/def ::method ::valid-http-methods)
-(s/def ::interceptors ::common-interceptors/interceptors)
+(s/def ::interceptors ::common.interceptors/interceptors)
 (s/def ::path-params  (s/* (s/cat :key keyword? :val string?)))
 
 (s/def ::expanded-routes
