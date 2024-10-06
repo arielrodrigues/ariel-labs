@@ -43,3 +43,7 @@
 
 (defn weekend? [zoned-date-time]
   (jt/weekend? zoned-date-time))
+
+(defn change-zone
+  [zoned-date-time new-zone]
+  (jt/zoned-date-time zoned-date-time new-zone))

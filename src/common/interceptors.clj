@@ -1,7 +1,8 @@
 (ns common.interceptors
   (:require [clojure.data.json :as json]
             [clojure.spec.alpha :as s]
-            [io.pedestal.http.content-negotiation :as content-negotiation]))
+            [io.pedestal.http.content-negotiation :as content-negotiation]
+            [io.pedestal.interceptor.error :refer [error-dispatch]]))
 
 (s/def ::name (s/nilable keyword?))
 (s/def ::enter (s/nilable ifn?))
@@ -41,8 +42,22 @@
                                               :headers {"Content-Type" accepted-content-type}
                                               :body (coerce-body body accepted-content-type)))))})
 
+(def service-error-handler
+  (error-dispatch [context ex]
+
+                  [{:exception-type :bad-request}]
+                  (assoc context :response {:status 400 :body (-> ex Throwable->map :cause)})
+
+                  [{:exception-type :not-found}]
+                  (assoc context :response {:status 404 :body (-> ex Throwable->map :cause)})
+
+                  :else
+                  (assoc context :io.pedestal.interceptor.chain/error ex)))
+
+
 (def common-interceptors
-  [content-negotiation-interceptor
+  [service-error-handler
+   content-negotiation-interceptor
    coerce-body-interceptor])
 
 (defn- inject-common-interceptors-on-path-map

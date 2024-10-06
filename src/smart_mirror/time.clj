@@ -4,6 +4,7 @@
             [java-time.api :as jt]))
 
 (def timezones (set (jt/available-zone-ids)))
+(s/def ::valid-timezone timezones)
 
 (s/def ::utc-offset string?)
 (s/def ::name timezones)
@@ -20,10 +21,17 @@
                 ::timestamp
                 ::weekend?]))
 
+(s/fdef valid-timezone?
+  :args (s/cat :timezone string?)
+  :ret boolean?)
+(defn valid-timezone? [timezone]
+  (boolean (some #{timezone} timezones)))
+
+(def valid-timezones? (partial every? valid-timezone?))
+
 (s/fdef ->time
   :args (s/cat :as-of ::time/zoned-date-time)
   :ret ::time)
-
 (defn ->time [as-of]
   #::{:utc-offset (time/->offset as-of)
        :timezone {:name (time/->zone-name as-of)
@@ -31,3 +39,12 @@
        :date-time (time/->iso-date-time as-of)
        :timestamp (time/->timestamp as-of)
        :weekend? (time/weekend? as-of)})
+
+(s/fdef time+zones
+  :args (s/cat :base ::time/zoned-date-time :zones ::valid-timezone)
+  :ret (s/coll-of ::time))
+(defn time+zones [base zones]
+  (->> zones
+       (map #(time/change-zone base %))
+       (cons base)
+       (map ->time)))

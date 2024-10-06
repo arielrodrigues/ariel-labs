@@ -9,18 +9,24 @@
   {:status 200
    :body (controller/foo request nil)})
 
-(defn now!
+(defn time
   [request]
   {:status 200
    :body (controller/now request (time/now))})
+
+(defn weather
+  [request]
+  {:status 200
+   :body (controller/foo request nil)})
+
+(def routes
+  ["/time" {:get {:handler time}}
+   "/weather" {:get {:handler weather}}])
 
 (def base-routes
   ["/version" {:get {:handler foo-handler}}
    "/health" {:get {:handler foo-handler}}
    "/metrics" {:get {:handler foo-handler}}])
-
-(def routes
-  ["/now" {:get {:handler now!}}])
 
 (def route-map
   (-> routes
