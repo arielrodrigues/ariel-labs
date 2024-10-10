@@ -12,4 +12,5 @@
 (defn bootstrap! [system-map]
   (->> system-map
        component/start-system
-       (reset! system)))
+       (reset! system))
+  @system)

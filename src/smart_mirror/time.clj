@@ -1,10 +1,12 @@
 (ns smart-mirror.time
   (:require [clojure.spec.alpha :as s]
+            [clojure.string :as string]
             [common.time :as time]
             [java-time.api :as jt]))
 
 (def timezones (set (jt/available-zone-ids)))
 (s/def ::valid-timezone timezones)
+(s/def ::valid-timezones (s/coll-of ::valid-timezone))
 
 (s/def ::utc-offset string?)
 (s/def ::name timezones)
@@ -44,7 +46,18 @@
   :args (s/cat :base ::time/zoned-date-time :zones ::valid-timezone)
   :ret (s/coll-of ::time))
 (defn time+zones [base zones]
-  (->> zones
-       (map #(time/change-zone base %))
-       (cons base)
-       (map ->time)))
+  (if (empty? zones)
+    [(->time base)]
+    (->> zones
+         (map #(time/change-zone base %))
+         (cons base)
+         (map ->time))))
+
+(s/fdef qs->timezones
+  :args (s/cat :qs string?)
+  :ret (s/nilable ::valid-timezones))
+ (defn qs->timezones
+   [qs]
+   (let [timezones (if (empty? qs) [] (string/split qs #" "))]
+     (when (valid-timezones? timezones)
+       timezones)))

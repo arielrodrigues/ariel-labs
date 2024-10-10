@@ -52,7 +52,7 @@
                   (assoc context :response {:status 404 :body (-> ex Throwable->map :cause)})
 
                   :else
-                  (assoc context :io.pedestal.interceptor.chain/error ex)))
+                  (assoc context :response {:status 500 :body {:message "Internal server error."}})))
 
 
 (def common-interceptors

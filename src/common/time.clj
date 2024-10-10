@@ -18,8 +18,9 @@
 (s/def ::zoned-date-time (s/with-gen #(instance? java.time.ZonedDateTime %)
                            zoned-date-time-gen))
 
-(defn now []
-  (jt/zoned-date-time))
+(defn now
+  ([] (jt/zoned-date-time))
+  ([& params] (apply jt/zoned-date-time params)))
 
 (defn ->zone-name [zoned-date-time]
   (-> zoned-date-time
