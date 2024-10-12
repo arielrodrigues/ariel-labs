@@ -20,7 +20,7 @@
                     (match? 200 status)
                     (match?
                      [{:utc-offset "+01:00"
-                       :timezone {:name "Europe/London", :abbreviation "GMT"}
+                       :timezone {:name "Europe/London", :abbreviation "BST"}
                        :date-time "2024-10-10T20:49:10.386094+01:00[Europe/London]"
                        :timestamp 1728589750
                        :weekend? false}]
@@ -35,7 +35,7 @@
                     (match? 200 status)
                     (match?
                      [{:utc-offset "+01:00"
-                       :timezone {:name "Europe/London", :abbreviation "GMT"}
+                       :timezone {:name "Europe/London", :abbreviation "BST"}
                        :date-time "2024-10-10T20:49:10.386094+01:00[Europe/London]"
                        :timestamp 1728589750
                        :weekend? false}
@@ -55,7 +55,7 @@
                     (match? 200 status)
                     (match?
                      [{:utc-offset "+01:00"
-                       :timezone {:name "Europe/London", :abbreviation "GMT"}
+                       :timezone {:name "Europe/London", :abbreviation "BST"}
                        :date-time "2024-10-10T20:49:10.386094+01:00[Europe/London]"
                        :timestamp 1728589750
                        :weekend? false}
@@ -65,7 +65,7 @@
                        :timestamp 1728589750
                        :weekend? false}
                       {:utc-offset "+02:00",
-                       :timezone {:name "Europe/Berlin", :abbreviation "CET"},
+                       :timezone {:name "Europe/Berlin", :abbreviation "CEST"},
                        :date-time "2024-10-10T21:49:10.386094+02:00[Europe/Berlin]",
                        :timestamp 1728589750,
                        :weekend? false}]

@@ -7,13 +7,11 @@
             [common.interceptors]
             [common.routes :as common-routes]))
 
-#dbg
- (defn- every-handler?*
+(defn- every-handler?*
    [pred path-map]
    (let [res (update-vals path-map (fn [{:keys [handler]}] (pred handler)))]
      (every? (comp true? boolean) (vals res))))
 
-#dbg
 (defn- every-handler?
   [pred routes]
   (every? true?

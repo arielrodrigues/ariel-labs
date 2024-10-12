@@ -28,7 +28,7 @@
       str))
 
 (defn ->short-zone-name [zoned-date-time]
-  (jt/format "v" zoned-date-time))
+  (jt/format "z" zoned-date-time))
 
 (defn ->timestamp [date-time]
   (-> date-time
