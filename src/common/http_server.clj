@@ -1,15 +1,13 @@
 (ns common.http-server
   (:require [com.stuartsierra.component :as component]
-            [common.routes :refer [expand-routes!]]
             [io.pedestal.http :as http]))
 
 (def DEFAULT-SERVER-PORT 8080)
 
 (defrecord HttpServer [routes port server]
   component/Lifecycle
-
   (start [component]
-    (let [service-map {::http/routes (expand-routes! routes)
+    (let [service-map {::http/routes (:routes routes)
                        ::http/type :jetty
                        ::http/port port}
           instance (-> service-map
@@ -22,15 +20,17 @@
     (assoc component :server (http/stop server))))
 
 (defn new-http-server
-  ([routes]
-   (new-http-server routes DEFAULT-SERVER-PORT))
-  ([routes port]
-   (map->HttpServer {:routes routes :port port})))
+  ([]
+   (new-http-server DEFAULT-SERVER-PORT))
+  ([port]
+   (map->HttpServer {:port port})))
+
+;; --
 
 (defrecord MockHttpServer [routes port server]
   component/Lifecycle
   (start [component]
-    (let [service-map {::http/routes (expand-routes! routes)
+    (let [service-map {::http/routes (:routes routes)
                        ::http/type :jetty
                        ::http/port port}
           instance (-> service-map
@@ -39,5 +39,5 @@
       (assoc component :service instance))))
 
 (defn new-mock-http-server
-  [routes]
-  (map->MockHttpServer {:routes routes :port DEFAULT-SERVER-PORT}))
+  []
+  (map->MockHttpServer {:port DEFAULT-SERVER-PORT}))

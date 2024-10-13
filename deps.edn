@@ -8,8 +8,9 @@
                  :classpath-overrides {org.clojure/clojure nil}
                  :extra-deps {com.github.flow-storm/clojure {:mvn/version "1.12.0-1"}
                               com.github.flow-storm/flow-storm-dbg {:mvn/version "3.17.4"}}
-                 :jvm-opts ["-Dclojure.storm.instrumentEnable=true"
-                            "-Dclojure.storm.instrumentOnlyPrefixes=YOUR_INSTRUMENTATION_STRING"]}}
+                 :jvm-opts ["-Dflowstorm.startRecording=false"
+                            "-Dclojure.storm.instrumentEnable=true"
+                            "-Dclojure.storm.instrumentAutoPrefixes=true"]}}
  :deps {org.clojure/clojure {:mvn/version "1.12.0"}
         io.pedestal/pedestal.jetty {:mvn/version "0.7.0"}
         io.pedestal/pedestal.error {:mvn/version "0.7.1"}

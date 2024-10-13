@@ -9,8 +9,7 @@
   (logic/foo))
 
 (defn now
-  [{:keys [query-params] :as _request}
-   as-of]
-  (if-let [timezones (time/qs->timezones (get query-params :include ""))]
+  [include as-of]
+  (if-let [timezones (time/qs->timezones include)]
     (time/time+zones as-of timezones)
     (common.exceptions/bad-request "invalid timezone")))

@@ -14,7 +14,7 @@
                                       ::leave
                                       ::error]))
 
-(s/def ::interceptors (s/coll-of ::interceptor))
+(s/def ::interceptors (s/coll-of ::interceptor :gen-max 5))
 
 (def supported-content-types
   ["text/plain"
@@ -42,34 +42,27 @@
                                               :headers {"Content-Type" accepted-content-type}
                                               :body (coerce-body body accepted-content-type)))))})
 
+(defn inject-components [components]
+  {:name ::inject-components
+   :enter (fn [context]
+            (assoc-in context [:request :components] components))})
+
 (def service-error-handler
   (error-dispatch [context ex]
 
-                  [{:exception-type :bad-request}]
-                  (assoc context :response {:status 400 :body (-> ex Throwable->map :cause)})
+    [{:exception-type :bad-request}]
+    (assoc context :response {:status 400 :body (-> ex Throwable->map :cause)})
 
-                  [{:exception-type :not-found}]
-                  (assoc context :response {:status 404 :body (-> ex Throwable->map :cause)})
+    [{:exception-type :not-found}]
+    (assoc context :response {:status 404 :body (-> ex Throwable->map :cause)})
 
-                  :else
-                  (assoc context :response {:status 500 :body {:message "Internal server error."}})))
+    :else
+    (assoc context :response {:status 500 :body {:message "Internal server error."}})))
 
 
-(def common-interceptors
-  [service-error-handler
+(defn common-interceptors
+  [components]
+  [(inject-components components)
+   service-error-handler
    content-negotiation-interceptor
    coerce-body-interceptor])
-
-(defn- inject-common-interceptors-on-path-map
-  [path-map]
-  (update-vals path-map (fn [v]
-                          (let [handler (get v :handler)]
-                            (assoc v :handler (conj common-interceptors handler))))))
-
-(defn routes->routes+common-interceptors
-  [routes]
-  (->> routes
-       (partition 2)
-       (map (fn [[path path-map]]
-              [path (inject-common-interceptors-on-path-map path-map)]))
-       flatten))

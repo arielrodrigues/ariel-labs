@@ -2,7 +2,11 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
             [clojure.string]
-            [common.interceptors :as common.interceptors]
+            [com.stuartsierra.component :as component]
+            [common.interceptors]
+            [common.interceptors :as common-interceptors]
+            [common.system]
+            [common.system :as common-system]
             [io.pedestal.http.route :as io.route]))
 
 (def valid-http-methods
@@ -75,7 +79,6 @@
 
 (s/def ::route-name keyword?)
 (s/def ::method ::valid-http-methods)
-(s/def ::interceptors ::common.interceptors/interceptors)
 (s/def ::path-params  (s/* (s/cat :key keyword? :val string?)))
 
 (s/def ::expanded-routes
@@ -83,7 +86,7 @@
    (s/keys :req-un [::path
                     ::route-name
                     ::method
-                    ::interceptors
+                    :common.interceptors/interceptors
                     ::path-params])))
 
 (s/fdef expand-routes!
@@ -97,3 +100,34 @@
        (mapcat expand-routes!*)
        set
        io.route/expand-routes))
+
+(defn- inject-common-interceptors
+  [path-map common-interceptors]
+  (update-vals path-map (fn [v]
+                          (let [handler (get v :handler)]
+                            (assoc v :handler (conj common-interceptors handler))))))
+
+(defn ->routes+common-interceptors
+  [routes common-interceptors]
+  (->> routes
+       (partition 2)
+       (map (fn [[path path-map]]
+              [path (inject-common-interceptors path-map common-interceptors)]))
+       flatten))
+
+;; ---- component ----
+
+(defrecord Routes [routes components-name]
+  component/Lifecycle
+  (start [component]
+    (let [components (select-keys @common-system/system components-name)]
+      (assoc component :routes (-> routes
+                                   (->routes+common-interceptors
+                                    (common.interceptors/common-interceptors components))
+                                   expand-routes!))))
+  (stop [component]
+    (dissoc component :routes)))
+
+(defn new-routes
+  [routes components-name]
+  (map->Routes {:routes routes :components-name components-name}))

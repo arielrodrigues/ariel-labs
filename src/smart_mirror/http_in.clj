@@ -1,13 +1,11 @@
 (ns smart-mirror.http-in
-  (:require
-   [common.interceptors :as common.interceptors]
-   [common.time :as time]
-   [smart-mirror.controller :as controller]))
+  (:require [common.time :as time]
+            [smart-mirror.controller :as controller]))
 
 (defn time
-  [request]
-  {:status 200
-   :body (controller/now request (time/now))})
+  [{{:keys [include]} :query-params}]
+   {:status 200
+    :body (controller/now include (time/now))})
 
 (defn weather
   [request]
@@ -21,15 +19,15 @@
 ;; ---- base routes ----
 ;; @TODO: probably move it to the http server component
 
-(defn health [_request]
+(defn health [_]
   {:status 200
    :body {:http-server "I'm doing fine."}})
 
-(defn version [_request]
+(defn version [_]
   {:status 200
    :body {:version "0.1"}})
 
-(defn metrics [_request]
+(defn metrics [_]
   {:status 200
    :body []})
 
@@ -40,5 +38,4 @@
 
 (def route-map
   (-> routes
-      (concat base-routes)
-      common.interceptors/routes->routes+common-interceptors))
+      (concat base-routes)))

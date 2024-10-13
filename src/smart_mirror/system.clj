@@ -1,20 +1,28 @@
 (ns smart-mirror.system
-  (:require [common.http-server :refer [new-http-server new-mock-http-server]]
+  (:require [com.stuartsierra.component :as component]
             [common.http-client :refer [new-http-client new-mock-http-client]]
+            [common.http-server :refer [new-http-server new-mock-http-server]]
+            [common.routes :refer [new-routes]]
             [common.system :as system]
-            [com.stuartsierra.component :as component]
             [smart-mirror.http-in :as http-in]))
 
+(def injected-components
+  "Components that will be injected into the http handlers"
+  [:http-client])
+
 (def base-system-map
-  {:http-server (new-http-server http-in/route-map)
-   :http-client (new-http-client)})
+  {:routes (new-routes http-in/route-map injected-components)
+   :http-server (component/using (new-http-server)
+                                 {:routes :routes})
+   :http-client (new-http-client {})})
 
 (def test-system-map
   (merge
    base-system-map
-        {:http-server (new-mock-http-server http-in/route-map)
-         :http-client (component/using (new-mock-http-client)
-                                       {:mock-http-server :http-server})}))
+   {:http-server (component/using (new-mock-http-server)
+                                  {:routes :routes})
+    :http-client (component/using (new-mock-http-client)
+                                  {:mock-http-server :http-server})}))
 
 (defn create-and-start-system!
   ([] (system/bootstrap! base-system-map))
