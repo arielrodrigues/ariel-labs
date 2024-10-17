@@ -120,10 +120,10 @@
 (defrecord Routes [routes components-name]
   component/Lifecycle
   (start [component]
-    (let [components (select-keys @common-system/system components-name)]
+    (let [get-components (fn [] (select-keys @common-system/system components-name))]
       (assoc component :routes (-> routes
                                    (->routes+common-interceptors
-                                    (common.interceptors/common-interceptors components))
+                                    (common.interceptors/common-interceptors get-components))
                                    expand-routes!))))
   (stop [component]
     (dissoc component :routes)))

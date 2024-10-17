@@ -3,4 +3,6 @@
 
 (comment
   (fs-api/local-connect)
-  #rtrace (reduce + (map inc (range 10))))
+
+  (require '[clojure.tools.namespace.repl :as repl])
+  (repl/refresh))

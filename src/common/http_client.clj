@@ -1,7 +1,8 @@
 (ns common.http-client
   (:require [com.stuartsierra.component :as component]
-            [common.protocols :as protocols]
-            [org.httpkit.client :as http]))
+            [common.protocols.http-client :as protocols]
+            [org.httpkit.client :as http]
+            [state-flow.api :as flow]))
 
 (def default-headers
   {"Content-Type"    "application/json; charset=utf-8"})
@@ -16,7 +17,7 @@
 
 (defrecord HttpClient [default-options]
   protocols/HttpClient
-  (req! [req-map]
+  (req! [_this req-map]
     (let [req-map* (merge default-options req-map)]
       (http/request req-map*)))
 
@@ -28,28 +29,22 @@
   (map->HttpClient (merge default-options options)))
 
 ;; --
-
-(def *responses* (atom {}))
-
-(defn with-responses [responses f]
-  (let [before @*responses*]
-    (reset! *responses* responses)
-    (f)
-    (reset! *responses* before)))
-
-(defn add-responses! [responses]
-  (swap! *responses* merge responses))
-
 (defrecord MockHttpClient [mock-http-server]
-  protocols/HttpClient
-  (req! [{:keys [method url]}]
-    (get-in @*responses* [url method]))
+   protocols/HttpClient
+   (req! [this {:keys [method url]}]
+     (get-in
+      @(:*responses* this)
+      [url method]
+      {:status 404 :body {:message "not found"}}))
 
-  component/Lifecycle
-  (start [component]
-    (assoc component :service (get mock-http-server :service)))
-  (stop [component]
-    (dissoc component :service)))
+   component/Lifecycle
+   (start [component]
+     (assoc component
+            :service (get mock-http-server :service)
+            :*responses* (atom {})))
+   (stop [component]
+     (dissoc component :service :*responses*)))
+
 
 (defn new-mock-http-client []
   (map->MockHttpClient {}))

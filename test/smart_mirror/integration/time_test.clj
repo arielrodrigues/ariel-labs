@@ -1,19 +1,19 @@
 (ns smart-mirror.integration.time-test
   (:require [common.test :as common-test]
-            [common.time :as time]
+            [common.time :as common-time]
             [smart-mirror.integration.setup :refer [defflow]]
             [state-flow.api :as flow :refer [flow]]
             [state-flow.assertions.matcher-combinators :refer [match?]]
             [state-flow.labs.state :as flow-labs]))
 
 (def mocked-date-time
-  (time/now "2024-10-10T20:49:10.386094+01:00[Europe/London]"))
+  (common-time/now "2024-10-10T20:49:10.386094+01:00[Europe/London]"))
 
 (defflow get-time-test
   (flow "Given a request to get the time"
         (flow "When it doesn't include additional timezones"
               [{:keys [status body]} (flow-labs/with-redefs
-                                      [time/now (constantly mocked-date-time)]
+                                      [common-time/now (constantly mocked-date-time)]
                                        (common-test/request :get "/api/time"
                                                             :headers {"Accept" "application/json"}))]
               (flow "Then the time is returned in the default timezone (Europe/London)"
@@ -28,7 +28,7 @@
 
         (flow "When it includes one additional timezone"
               [{:keys [status body]} (flow-labs/with-redefs
-                                      [time/now (constantly mocked-date-time)]
+                                      [common-time/now (constantly mocked-date-time)]
                                        (common-test/request :get "/api/time?include=America/Sao_Paulo"
                                                             :headers {"Accept" "application/json"}))]
               (flow "Then the time is returned in the default timezone (Europe/London) and the aditional one"
@@ -48,7 +48,7 @@
 
         (flow "When it includes more than one additional timezones"
               [{:keys [status body]} (flow-labs/with-redefs
-                                      [time/now (constantly mocked-date-time)]
+                                      [common-time/now (constantly mocked-date-time)]
                                        (common-test/request :get "/api/time?include=America/Sao_Paulo+Europe/Berlin"
                                                             :headers {"Accept" "application/json"}))]
               (flow "Then the time is returned in the default timezone and the additional ones"
@@ -73,7 +73,7 @@
 
         (flow "When the included timezone is invalid"
               [{:keys [status]} (flow-labs/with-redefs
-                                 [time/now (constantly mocked-date-time)]
+                                 [common-time/now (constantly mocked-date-time)]
                                   (common-test/request :get "/api/time?include=America/Sao_Paulo+America/Aracaju"
                                                        :headers {"Accept" "application/json"}))]
               (flow "Then it should return HTTP Bad request (400)"

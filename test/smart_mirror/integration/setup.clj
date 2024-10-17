@@ -1,6 +1,5 @@
 (ns smart-mirror.integration.setup
-  (:require [common.time :as time]
-            [smart-mirror.system :as system]
+  (:require [smart-mirror.system :as system]
             [state-flow.api :as flow]))
 
 (defn build-initial-state
