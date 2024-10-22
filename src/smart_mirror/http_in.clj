@@ -8,9 +8,9 @@
     :body (controller/now include (time/now))})
 
 (defn weather
-  [request]
+  [{{:keys [http-client]} :components}]
   {:status 200
-   :body (controller/foo request nil)})
+   :body (controller/foo http-client)})
 
 (def routes
   ["/time" {:get {:handler time}}

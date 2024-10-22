@@ -58,7 +58,7 @@
 
                   :else
                   (do
-                    (print ex)
+                    ;; (print ex)
                     (assoc context :response {:status 500 :body {:message "Internal server error."}}))))
 
 
