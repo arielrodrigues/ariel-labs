@@ -8,8 +8,8 @@
    (fn [[date time tz]]
      (jt/zoned-date-time (jt/local-date-time date time) tz))
    (gen/tuple
-      ;; Generate dates within a specific range (e.g., within 2020-2025)
-    (gen/fmap #(jt/local-date %) (gen/choose 2020 2025))
+      ;; Generate dates within a specific range (e.g., within 2018-2028 1-12 1-28)
+    (gen/fmap (fn [[y m d]] (jt/local-date y m d)) (gen/tuple (gen/choose 2018 2028) (gen/choose 1 12) (gen/choose 1 28)))
       ;; Generate times (within the day range)
     (gen/fmap #(apply jt/local-time %) (gen/tuple (gen/choose 0 23) (gen/choose 0 59) (gen/choose 0 59)))
       ;; Generate valid time zones (you can pick a subset of zones)
@@ -48,3 +48,11 @@
 (defn change-zone
   [zoned-date-time new-zone]
   (jt/zoned-date-time zoned-date-time new-zone))
+
+(defn ->local-date
+  [args]
+  (apply jt/local-date args))
+
+(defn ->local-time
+  [args]
+  (apply jt/local-time args))

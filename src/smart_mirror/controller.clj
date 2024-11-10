@@ -4,7 +4,7 @@
             [smart-mirror.logic :as logic]
             [smart-mirror.time :as time]))
 
-(defn foo
+(defn weather-forecast
   [http-client]
   (let [location (http-out/get-location-from-ip http-client)
         coordinates (-> location

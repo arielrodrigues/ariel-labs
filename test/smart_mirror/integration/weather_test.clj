@@ -36,14 +36,8 @@
                                              :no-faults-injected
                                              mock-ipinfo-response
 
-                                             {ipinfo-endpoint {:get {:status (fn [status] (do (print status) (not= 200 status)))}}}
-                                             {:status 300}
-
-                                             {open-meteo-forecast-endpoint {:get {:status #(not= 200 %)}}}
-                                             {:status 512}
-
                                              :else
-                                             {:status 285})
+                                             {:status 500})
 
                     (flow "AND the call to Open Meteo forecast should be skipped if the IPinfo request fails."
                           (flow/when (common-test/http-failure-injected-to? ipinfo-endpoint :get)

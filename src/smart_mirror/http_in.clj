@@ -1,5 +1,6 @@
 (ns smart-mirror.http-in
   (:require [common.time :as time]
+            [smart-mirror.adapters.out :as out.adapter]
             [smart-mirror.controller :as controller]))
 
 (defn time
@@ -10,7 +11,9 @@
 (defn weather
   [{{:keys [http-client]} :components}]
   {:status 200
-   :body (controller/foo http-client)})
+   :body (-> http-client
+             controller/weather-forecast
+             out.adapter/weather-forecast->wire)})
 
 (def routes
   ["/time" {:get {:handler time}}
