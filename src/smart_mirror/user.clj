@@ -1,5 +1,6 @@
 (ns smart-mirror.user
-  (:require [flow-storm.api :as fs-api]
+  (:require [clojure.spec.alpha :as s]
+            [flow-storm.api :as fs-api]
             [smart-mirror.system :as system]))
 
 (comment

@@ -1,7 +1,23 @@
 (ns smart-mirror.specs.in
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
-            [common.time :as time]))
+            [common.time]
+            [smart-mirror.coordinates :as coordinates]
+            [smart-mirror.time :as time]))
+
+;; ipinfo
+(s/def ::city string?)
+(s/def ::region string?)
+(s/def ::country string?)
+(s/def ::loc (s/spec ::coordinates/str-coordinates))
+(s/def ::timezone ::time/name)
+
+(s/def ::ip-info
+  (s/keys :req-un [::city
+                   ::region
+                   ::country
+                   ::loc
+                   ::timezone]))
 
 ;; weather
 
@@ -9,8 +25,8 @@
 (s/def ::longitude (s/with-gen float? #(gen/double* {:min -180 :max 180})))
 (s/def ::elevation (s/with-gen float? #(gen/double* {:min 0 :max 10000})))
 
-(defn date-gen [] (gen/fmap time/->local-date (gen/tuple (gen/choose 2018 2028) (gen/choose 1 12) (gen/choose 1 28))))
-(defn hour-gen [] (gen/fmap time/->local-time (gen/tuple (gen/choose 0 23))))
+(defn date-gen [] (gen/fmap common.time/->local-date (gen/tuple (gen/choose 2018 2028) (gen/choose 1 12) (gen/choose 1 28))))
+(defn hour-gen [] (gen/fmap common.time/->local-time (gen/tuple (gen/choose 0 23))))
 (s/def ::hourly-interval (s/with-gen string?
                            (fn [] (let [date (date-gen)
                                        hour (hour-gen)]

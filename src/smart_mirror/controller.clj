@@ -1,7 +1,7 @@
 (ns smart-mirror.controller
   (:require [common.exceptions]
+            [smart-mirror.coordinates :as coordinates]
             [smart-mirror.http-out :as http-out]
-            [smart-mirror.logic :as logic]
             [smart-mirror.time :as time]))
 
 (defn weather-forecast
@@ -9,7 +9,7 @@
   (let [location (http-out/get-location-from-ip http-client)
         coordinates (-> location
                         :loc
-                        logic/->coordinates)
+                        coordinates/->coordinates)
         timezone (:timezone location)]
     (http-out/get-weather-forecast http-client coordinates timezone)))
 

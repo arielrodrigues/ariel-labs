@@ -2,7 +2,6 @@
   (:require [common.protocols.http-client :as protocols.http-client]
             [smart-mirror.adapters.in :as in.adapter]))
 
-
 (defn get-location-from-ip
   [http-client]
   (->> {:method :get
@@ -26,4 +25,5 @@
                          :timezone timezone}
           :headers {"Accept-Encoding" "identity"}}
          (protocols.http-client/req! http-client)
+         :body
          in.adapter/wire->weather-forecast)))

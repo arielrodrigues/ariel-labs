@@ -53,7 +53,7 @@
   (gen/elements http-faults))
 
 (def ^:dynamic *injected-faults* (atom {}))
-(def default-fault-injection-likelihood 0.3)
+(def default-fault-injection-likelihood 0.1)
 (defn- inject-fault? [likelihood]
   (< (rand) likelihood))
 
@@ -107,15 +107,15 @@
 
        (empty? faults-injected?#)
        (let [[_# matcher#] (first no-faults-injected-clause#)]
-         (match? matcher# ~response))
+         (match? (eval matcher#) ~response))
 
        (some (fn [[cond#]] (indicates-match? (eval cond#) faults-injected?#)) other-clauses#)
        (let [[_# matcher#] (first (filter (fn [[cond#]] (indicates-match? (eval cond#) faults-injected?#)) partitions#))]
-         (match? matcher# ~response))
+         (match? (eval matcher#) ~response))
 
        :else
        (let [[_# matcher#] (first else-clause#)]
-         (match? matcher# ~response)))))
+         (match? (eval matcher#) ~response)))))
 
 (defn http-failure-injected-to? [url method]
   (-> @*injected-faults* (get-in [url method]) some?))
