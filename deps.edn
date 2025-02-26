@@ -3,12 +3,14 @@
  :aliases {:test {:extra-paths ["test"]
                   :extra-deps {io.github.cognitect-labs/test-runner {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
                   :main-opts ["-m" "cognitect.test-runner"]
-                  :exec-fn cognitect.test-runner.api/test}
+                  :exec-fn cognitect.test-runner.api/test
+                  :jvm-opts ["-Dclojure.spec.check-asserts=true"]}
            :dev {:extra-paths ["test"]
                  :classpath-overrides {org.clojure/clojure nil}
                  :extra-deps {com.github.flow-storm/clojure {:mvn/version "1.12.0-1"}
                               com.github.flow-storm/flow-storm-dbg {:mvn/version "3.17.4"}}
-                 :jvm-opts ["-Dflowstorm.startRecording=false"
+                 :jvm-opts ["-Dclojure.spec.check-asserts=true"
+                            "-Dflowstorm.startRecording=false"
                             "-Dclojure.storm.instrumentEnable=true"
                             "-Dclojure.storm.instrumentAutoPrefixes=true"]}}
  :deps {org.clojure/clojure {:mvn/version "1.12.0"}

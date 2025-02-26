@@ -1,0 +1,1 @@
+["^ ","~:members",["^ ","getSystemCpuLoadTicks",["~#set",[["^ ","~:flags",["^2",["~:method","~:public","~:static"]]]]],"getProcessorCpuLoadTicks",["^2",[["^ ","^3",["^2",["^4","^5","^6"]]]]],"getContextSwitches",["^2",[["^ ","^3",["^2",["^4","^5","^6"]]]]],"getInterrupts",["^2",[["^ ","^3",["^2",["^4","^5","^6"]]]]],"getBootTime",["^2",[["^ ","^3",["^2",["^4","^5","^6"]]]]]]]

@@ -1,0 +1,1 @@
+["^ ","~:members",["^ ","getCpuTemperature",["~#set",[["^ ","~:flags",["^2",["~:method","~:public"]]]]],"getFanSpeeds",["^2",[["^ ","^3",["^2",["^4","^5"]]]]],"getCpuVoltage",["^2",[["^ ","^3",["^2",["^4","^5"]]]]]]]

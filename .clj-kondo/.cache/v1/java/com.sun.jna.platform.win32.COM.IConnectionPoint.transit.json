@@ -1,0 +1,1 @@
+["^ ","~:members",["^ ","IID_IConnectionPoint",["~#set",[["^ ","~:flags",["^2",["~:public","~:static","~:field","~:final"]]]]],"GetConnectionInterface",["^2",[["^ ","^3",["^2",["~:method","^4"]]]]],"Advise",["^2",[["^ ","^3",["^2",["^9","^4"]]]]],"Unadvise",["^2",[["^ ","^3",["^2",["^9","^4"]]]]]]]

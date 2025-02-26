@@ -1,0 +1,1 @@
+["^ ","~$get-location-from-ip",["^ ","~:row",5,"~:col",1,"~:fixed-arities",["~#set",[1]],"~:name","^0","~:ns","~$smart-mirror.http-out","~:top-ns","^7","~:type","~:fn"],"~$get-weather-forecast",["^ ","^1",13,"^2",1,"^3",["^4",[3]],"^5","^;","^6","^7","^8","^7","^9","^:"],"~:filename","/Users/arielrodrigues/projects/smart-mirror/src/smart_mirror/http_out.clj"]

@@ -1,0 +1,1 @@
+["^ ","~:members",["^ ","getOwningProcessId",["~#set",[["^ ","~:flags",["^2",["~:method","~:public"]]]]],"getThreadCpuLoadCumulative",["^2",[["^ ","^3",["^2",["^4","^5"]]]]],"getThreadCpuLoadBetweenTicks",["^2",[["^ ","^3",["^2",["^4","^5"]]]]],"toString",["^2",[["^ ","^3",["^2",["^4","^5"]]]]]]]
