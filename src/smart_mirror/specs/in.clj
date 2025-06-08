@@ -112,3 +112,32 @@
                    ::current
                    ::hourly
                    ::daily]))
+
+;; calendar
+(s/def ::summary string?)
+(s/def ::description string?)
+(s/def ::status string?)
+
+;; Start and end can contain dateTime or date (depending on all-day vs timed events)
+(s/def ::date string?)       ;; e.g., "2025-06-03"
+(s/def ::dateTime string?)   ;; e.g., "2025-06-03T10:00:00Z"
+(s/def ::timeZone string?)
+
+(s/def ::event-time
+  (s/keys :opt-un [::date ::dateTime ::timeZone]))
+
+(s/def ::start ::event-time)
+(s/def ::end ::event-time)
+
+(s/def ::event
+  (s/keys :opt-un [::summary
+                   ::description
+                   ::start
+                   ::end
+                   ::status]))
+
+(s/def ::items (s/coll-of ::event))
+
+(s/def ::calendar
+  (s/keys :opt-un [::summary
+                   ::items]))

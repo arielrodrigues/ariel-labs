@@ -26,6 +26,7 @@
 (s/def ::sunshine-duration (s/with-gen float? #(gen/double* {:min 1 :max 14 :NaN? false})))
 (s/def ::daylight-duration (s/with-gen float? #(gen/double* {:min 10000 :max 60000 :NaN? false})))
 (s/def ::hour (s/with-gen float? #(gen/fmap float (gen/choose 0 23))))
+(s/def ::weather-code (s/with-gen integer? #(gen/choose 0 99)))
 
 (s/def ::current (s/keys :req-un [::temperature
                                   ::relative-humidity
@@ -33,7 +34,8 @@
                                   ::precipitation
                                   ::rain
                                   ::snowfall
-                                  ::wind-speed]))
+                                  ::wind-speed
+                                  ::weather-code]))
 
 ;; hourly
 (s/def :smart-mirror.weather.hourly/time (s/coll-of ::hourly-interval :gen-max 5))
@@ -71,6 +73,7 @@
 (s/def :smart-mirror.weather.daily/snowfall-sum (s/coll-of ::snowfall :gen-max 5))
 (s/def :smart-mirror.weather.daily/precipitation-hours (s/coll-of ::hour :gen-max 5))
 (s/def :smart-mirror.weather.daily/precipitation-probability-max (s/coll-of ::precipitation-probability :gen-max 5))
+(s/def :smart-mirror.weather.daily/weather-code (s/coll-of ::weather-code))
 
 (s/def ::daily
   (s/keys :req-un [:smart-mirror.weather.daily/time
@@ -82,7 +85,8 @@
                    :smart-mirror.weather.daily/rain-sum
                    :smart-mirror.weather.daily/snowfall-sum
                    :smart-mirror.weather.daily/precipitation-hours
-                   :smart-mirror.weather.daily/precipitation-probability-max]))
+                   :smart-mirror.weather.daily/precipitation-probability-max
+                   :smart-mirror.weather.daily/weather-code]))
 
 (s/def ::weather-forecast
   (s/keys :req-un [::latitude

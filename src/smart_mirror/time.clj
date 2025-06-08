@@ -61,3 +61,19 @@
    (let [timezones (if (empty? qs) [] (string/split qs #" "))]
      (when (valid-timezones? timezones)
        timezones)))
+
+(s/fdef ->iso-start-of-day-utc
+  :args (s/cat :as-of ::time/zoned-date-time)
+  :ret string?)
+(defn ->iso-start-of-day-utc [as-of]
+  (-> as-of
+      time/->midnight
+      time/->iso-date-time-no-zone-name))
+
+(s/fdef ->iso-end-of-day-utc
+  :args (s/cat :as-of ::time/zoned-date-time)
+  :ret string?)
+(defn ->iso-end-of-day-utc [as-of]
+  (-> as-of
+      time/->end-of-day
+      time/->iso-date-time-no-zone-name))

@@ -27,7 +27,8 @@
    :sunshine-duration "s"
    :daylight-duration "s"
    :sunrise "iso8601"
-   :sunset "iso8601"})
+   :sunset "iso8601"
+   :weather-code "wmo code"})
 
 (s/def ::default-units (s/map-of (-> default-units keys set) string?))
 

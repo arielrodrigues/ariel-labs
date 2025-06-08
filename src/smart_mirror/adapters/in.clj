@@ -1,5 +1,7 @@
 (ns smart-mirror.adapters.in
   (:require [clojure.spec.alpha :as s]
+            [medley.core :refer [assoc-some]]
+            [smart-mirror.calendar :as calendar]
             [smart-mirror.specs.in :as in]
             [smart-mirror.weather :as weather]))
 
@@ -29,7 +31,8 @@
          :sunrise (->namespaced "sunrise")
          :daylight_duration (->namespaced "daylight-duration")
          :hour_h (->namespaced "hour")
-         :time (->namespaced "time")}]
+         :time (->namespaced "time")
+         :weather_code (->namespaced "weather-code")}]
     (fn [k] (get ->normalized-keys k k))))
 
 (defn- ->current-weather-forecast
@@ -58,3 +61,30 @@
              :hourly (->hourly-weather-forecast hourly)
              :daily (->daily-weather-forecast daily)
              :default-units weather/default-units})
+
+(defn- wire->event-time
+  [{:keys [date dateTime timeZone]}]
+  (assoc-some
+   #::calendar{:time-zone timeZone}
+   :date date
+   :date-time dateTime))
+
+(s/fdef wire->gcal-event
+  :args (s/cat :wire-event ::in/event)
+  :ret ::calendar/event)
+(defn wire->gcal-event
+  [{:keys [summary description start end status]}]
+  (assoc-some
+   #::calendar{:summary summary
+               :status status
+               :start (wire->event-time start)
+               :end (wire->event-time end)}
+   :description description))
+
+(s/fdef wire->gcal
+  :args (s/cat :wire-gcal ::in/calendar)
+  :ret ::calendar/calendar)
+(defn wire->gcal
+  [calendar]
+  (merge {::calendar/owner (:summary calendar)}
+         {::events (map wire->gcal-event (:items calendar))}))

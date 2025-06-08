@@ -42,6 +42,9 @@
 (defn ->iso-date-time [zoned-date-time]
   (jt/format :iso-date-time zoned-date-time))
 
+(defn ->iso-date-time-no-zone-name [zoned-date-time]
+  (jt/format "yyyy-MM-dd'T'HH:mm:ssXXX" zoned-date-time))
+
 (defn weekend? [zoned-date-time]
   (jt/weekend? zoned-date-time))
 
@@ -56,3 +59,11 @@
 (defn ->local-time
   [args]
   (apply jt/local-time args))
+
+(defn ->midnight
+  [args]
+  (jt/zoned-date-time (jt/local-date-time args (jt/local-time 0 0 0)) (jt/zone-id)))
+
+(defn ->end-of-day
+  [args]
+  (jt/zoned-date-time (jt/local-date-time args (jt/local-time 23 59 59)) (jt/zone-id)))
