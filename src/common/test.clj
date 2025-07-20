@@ -106,16 +106,16 @@
        (throw (IllegalArgumentException. "match-case? can only have one :else clause"))
 
        (empty? faults-injected?#)
-       (let [[_# matcher#] (first no-faults-injected-clause#)]
-         (match? (eval matcher#) ~response))
+       ~(let [[_ matcher] (first (filter (fn [[cond]] (= :no-faults-injected cond)) (partition 2 clauses)))]
+          `(match? ~matcher ~response))
 
-       (some (fn [[cond#]] (indicates-match? (eval cond#) faults-injected?#)) other-clauses#)
-       (let [[_# matcher#] (first (filter (fn [[cond#]] (indicates-match? (eval cond#) faults-injected?#)) partitions#))]
-         (match? (eval matcher#) ~response))
+       (some (fn [[cond#]] (indicates-match? cond# faults-injected?#)) other-clauses#)
+       ~(let [[_ matcher] (first (filter (fn [[cond]] (and (not= cond :no-faults-injected) (not= cond :else))) (partition 2 clauses)))]
+          `(match? ~matcher ~response))
 
        :else
-       (let [[_# matcher#] (first else-clause#)]
-         (match? (eval matcher#) ~response)))))
+       ~(let [[_ matcher] (first (filter (fn [[cond]] (= :else cond)) (partition 2 clauses)))]
+          `(match? ~matcher ~response)))))
 
 (defn http-failure-injected-to? [url method]
   (-> @*injected-faults* (get-in [url method]) some?))

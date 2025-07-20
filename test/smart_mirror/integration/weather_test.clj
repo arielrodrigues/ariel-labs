@@ -4,7 +4,7 @@
             [common.test :as common-test]
             [smart-mirror.adapters.in :as in.adapter]
             [smart-mirror.adapters.out :as out.adapter]
-            [smart-mirror.integration.setup :refer [defflow defflow*]]
+            [smart-mirror.integration.setup :refer [defflow defflow-quickcheck]]
             [smart-mirror.specs.in :as in]
             [smart-mirror.specs.out :as out]
             [state-flow.api :as flow :refer [flow]]
@@ -16,13 +16,10 @@
    :body (gen/generate (s/gen ::in/ip-info))})
 
 (def open-meteo-forecast-endpoint "https://api.open-meteo.com/v1/forecast")
-(def mock-open-meteo-forecast-response
-  {:status 200
-   :body (gen/generate (s/gen ::in/weather-forecast))})
 
-(defflow* get-weather-forecast
-  {}
-  [a (s/gen ::in/weather-forecast)]
+(defflow-quickcheck get-weather-forecast
+  [mock-open-meteo-forecast-response (gen/fmap (fn [forecast] {:status 200 :body forecast})
+                                               (s/gen ::in/weather-forecast))]
   (flow "GIVEN that both IPInfo and Open Meteo forecast endpoints might be up and health (Faults might be injected)."
         (common-test/add-responses! {ipinfo-endpoint {:get mock-ipinfo-response}})
         (common-test/add-responses! {open-meteo-forecast-endpoint {:get mock-open-meteo-forecast-response}})
@@ -37,11 +34,11 @@
 
                                              :no-faults-injected
                                              (fn [{:keys [body]}]
-                                               (and (s/valid? ::out/weather-forecast (assoc body :current nil))
-                                                    (= body
-                                                       (-> (:body mock-open-meteo-forecast-response)
-                                                           in.adapter/wire->weather-forecast
-                                                           out.adapter/weather-forecast->wire))))
+                                               (and (nil? (s/explain-data ::out/weather-forecast body))
+                                                    (match? body
+                                                            (-> (:body mock-open-meteo-forecast-response)
+                                                                in.adapter/wire->weather-forecast
+                                                                out.adapter/weather-forecast->wire))))
 
                                              :else
                                              {:status 500})
