@@ -79,7 +79,7 @@
                :status status
                :start (wire->event-time start)
                :end (wire->event-time end)}
-   :description description))
+   ::calendar/description description))
 
 (s/fdef wire->gcal
   :args (s/cat :wire-gcal ::in/calendar)
@@ -87,4 +87,4 @@
 (defn wire->gcal
   [calendar]
   (merge {::calendar/owner (:summary calendar)}
-         {::events (map wire->gcal-event (:items calendar))}))
+         {::calendar/events (map wire->gcal-event (:items calendar))}))

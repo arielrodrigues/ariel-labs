@@ -12,7 +12,7 @@
 (s/def ::time-zone string?)
 
 (s/def ::event-time
-  (s/keys :req [::date ::date-time ::time-zone]))
+  (s/keys :opt [::date ::date-time ::time-zone]))
 
 (s/def ::start ::event-time)
 (s/def ::end ::event-time)
@@ -27,5 +27,5 @@
 (s/def ::events (s/coll-of ::event))
 
 (s/def ::calendar
-  (s/keys :req [::owner
-                ::events]))
+  (s/keys :req [::events]
+          :opt [::owner]))
