@@ -1,1 +1,0 @@
-["^ ","~:members",["^ ","queryStoragePools",["~#set",[["^ ","~:flags",["^2",["~:method","~:public","~:static"]]]]],"queryStoragePoolPhysicalDisks",["^2",[["^ ","^3",["^2",["^4","^5","^6"]]]]],"queryPhysicalDisks",["^2",[["^ ","^3",["^2",["^4","^5","^6"]]]]],"queryVirtualDisks",["^2",[["^ ","^3",["^2",["^4","^5","^6"]]]]]]]

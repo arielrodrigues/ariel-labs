@@ -1,1 +1,0 @@
-["^ ","~:members",["^ ","getDomainName",["~#set",[["^ ","~:flags",["^2",["~:method","~:public"]]]]],"getHostName",["^2",[["^ ","^3",["^2",["^4","^5"]]]]],"getIpv4DefaultGateway",["^2",[["^ ","^3",["^2",["^4","^5"]]]]],"getIpv6DefaultGateway",["^2",[["^ ","^3",["^2",["^4","^5"]]]]]]]

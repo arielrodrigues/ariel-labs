@@ -1,1 +1,0 @@
-["^ ","~:members",["^ ","INSTANCE",["~#set",[["^ ","~:flags",["^2",["~:public","~:static","~:field","~:final"]]]]],"SCNetworkInterfaceCopyAll",["^2",[["^ ","^3",["^2",["~:method","^4"]]]]],"SCNetworkInterfaceGetBSDName",["^2",[["^ ","^3",["^2",["^9","^4"]]]]],"SCNetworkInterfaceGetLocalizedDisplayName",["^2",[["^ ","^3",["^2",["^9","^4"]]]]]]]
