@@ -16,10 +16,10 @@
              out.adapter/weather-forecast->wire)})
 
 (defn calendar-handler
-  [{{:keys [http-client config]} :components}]
+  [{{:keys [http-client config token-provider]} :components}]
   {:status 200
    :body (-> http-client
-             (controller/gcal-events config (time/now)))})
+             (controller/gcal-events config (time/now) token-provider))})
 
 (def routes
   ["/time" {:get {:handler time-handler}}
