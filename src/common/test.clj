@@ -140,13 +140,13 @@
   (matcher-combinators.core/indicates-match?
    (matcher-combinators.core/match expected actual)))
 
-(defn http-failure-injected-to?
+(defn http-fault-injected-to?
   ([url method]
    (-> @*injected-faults* (get-in [url method]) some?))
   ([url method expected]
    (indicates-matches? expected (get-in @*injected-faults* [url method]))))
 
-(defn token-provider-fault-injected?
+(defn fault-injected-to-token-provider?
   ([]
    (-> @*injected-faults* (get :token-provider) some?))
   ([fault-type]

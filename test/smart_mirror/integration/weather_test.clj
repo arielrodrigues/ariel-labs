@@ -40,15 +40,23 @@
                                                                 in.adapter/wire->weather-forecast
                                                                 out.adapter/weather-forecast->wire))))
 
-                                             (common-test/http-failure-injected-to? ipinfo-endpoint :get)
+                                             (common-test/http-fault-injected-to? ipinfo-endpoint :get)
                                              {:status 502}
 
-                                             (common-test/http-failure-injected-to? open-meteo-forecast-endpoint :get)
+                                             (common-test/http-fault-injected-to? open-meteo-forecast-endpoint :get)
                                              {:status 502}
+
+                                             (common-test/fault-injected-to-token-provider?)
+                                             (fn [{:keys [body]}]
+                                               (and (nil? (s/explain-data ::out/weather-forecast body))
+                                                    (match? body
+                                                            (-> (:body mock-open-meteo-forecast-response)
+                                                                in.adapter/wire->weather-forecast
+                                                                out.adapter/weather-forecast->wire))))
 
                                              :else
                                              {:status 500})
 
                     (flow "AND the call to Open Meteo forecast should be skipped if the IPinfo request fails."
-                          (flow/when (common-test/http-failure-injected-to? ipinfo-endpoint :get)
+                          (flow/when (common-test/http-fault-injected-to? ipinfo-endpoint :get)
                             (match? false? (common-test/request-made-to? open-meteo-forecast-endpoint :get))))))))
