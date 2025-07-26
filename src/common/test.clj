@@ -79,23 +79,23 @@
 (defn- maybe-inject-token-provider-fault!
   []
   (let [fault (gen/generate (gen-random-token-fault))]
-    (swap! *injected-faults* assoc :token-provider fault)
+    (swap! *injected-faults* assoc :google-auth-token-provider fault)
     fault))
 
 (defn inject-faults! []
   (reset! *injected-faults* {})
   (flow/flow "inject-fauls!>"
              [http-responses (flow/get-state (comp :*responses* :http-client :system))
-              token-provider-faults (flow/get-state (comp :*faults* :token-provider :system))]
+              google-auth-token-provider-faults (flow/get-state (comp :*faults* :google-auth-token-provider :system))]
 
              ;; Inject http faults
              (-> http-responses
                  (reset! (map-kv maybe-inject-fault! @http-responses))
                  flow/return)
 
-             ;; Inject token provider faults
+             ;; Inject google auth token provider faults
              (->> (maybe-inject-token-provider-fault!)
-                  (swap! token-provider-faults assoc :get-access-token)
+                  (swap! google-auth-token-provider-faults assoc :get-access-token)
                   flow/return)))
 
 (defn match? [expected actual]
@@ -148,9 +148,9 @@
 
 (defn fault-injected-to-token-provider?
   ([]
-   (-> @*injected-faults* (get :token-provider) some?))
+   (-> @*injected-faults* (get :google-auth-token-provider) some?))
   ([fault-type]
-   (= fault-type (-> @*injected-faults* (get :token-provider) :type))))
+   (= fault-type (-> @*injected-faults* (get :google-auth-token-provider) :type))))
 
 (defn request-made-to? [url method]
   (flow/flow "request-made-to?>"

@@ -10,7 +10,7 @@
 
 (def injected-components
   "Components that will be injected into the http handlers"
-  [:http-client :config :token-provider])
+  [:http-client :config :google-auth-token-provider])
 
 (def base-system-map
   {:routes (new-routes http-in/route-map injected-components)
@@ -18,7 +18,7 @@
                                  {:routes :routes})
    :http-client (new-http-client {})
    :config (new-config)
-   :token-provider (gauth/new-google-auth-token-provider)})
+   :google-auth-token-provider (gauth/new-google-auth-token-provider)})
 
 (def test-system-map
   (merge
@@ -27,7 +27,7 @@
                                   {:routes :routes})
     :http-client (component/using (new-mock-http-client)
                                   {:mock-http-server :http-server})
-    :token-provider (gauth/new-mock-token-provider "mock-test-token")}))
+    :google-auth-token-provider (gauth/new-mock-token-provider "mock-test-token")}))
 
 (defn create-and-start-system!
   ([] (system/bootstrap! base-system-map))

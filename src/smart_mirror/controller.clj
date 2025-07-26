@@ -22,8 +22,8 @@
 
 
 (defn gcal-events
-  [http-client config as-of token-provider]
+  [http-client config as-of google-auth-token-provider]
   (let [min-time (time/->iso-start-of-day-utc as-of)
         max-time (time/->iso-end-of-day-utc as-of)
-        access-token (protocols.gauth/get-access-token token-provider config)]
+        access-token (protocols.gauth/get-access-token google-auth-token-provider config)]
     (http-out/get-gcal-events http-client access-token min-time max-time)))
