@@ -53,6 +53,12 @@
                   [{:exception-type :bad-request}]
                   (assoc context :response {:status 400 :body (-> ex Throwable->map :cause)})
 
+                  [{:exception-type :unauthorized}]
+                  (assoc context :response {:status 401 :body (-> ex Throwable->map :cause)})
+
+                  [{:exception-type :forbidden}]
+                  (assoc context :response {:status 403 :body (-> ex Throwable->map :cause)})
+
                   [{:exception-type :not-found}]
                   (assoc context :response {:status 404 :body (-> ex Throwable->map :cause)})
 
@@ -60,9 +66,7 @@
                   (assoc context :response {:status 502 :body (-> ex Throwable->map :cause)})
 
                   :else
-                  (do
-                    ;; (print ex)
-                    (assoc context :response {:status 500 :body {:message "Internal server error."}}))))
+                  (assoc context :response {:status 500 :body {:message "Internal server error."}})))
 
 
 (defn common-interceptors

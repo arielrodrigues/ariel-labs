@@ -18,3 +18,15 @@
                   (merge
                    {:exception-type :bad-gateway}
                    args))))
+
+(defn unauthorized [msg & args]
+  (throw (ex-info (json/write-str {:message msg})
+                  (merge
+                   {:exception-type :unauthorized}
+                   args))))
+
+(defn forbidden [msg & args]
+  (throw (ex-info (json/write-str {:message msg})
+                  (merge
+                   {:exception-type :forbidden}
+                   args))))

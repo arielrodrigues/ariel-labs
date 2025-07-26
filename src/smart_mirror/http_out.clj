@@ -1,5 +1,6 @@
 (ns smart-mirror.http-out
   (:require [common.exceptions]
+            [common.http-client]
             [common.protocols.http-client :as protocols.http-client]
             [smart-mirror.adapters.in :as in.adapter]))
 
@@ -37,14 +38,19 @@
 
 (defn get-gcal-events
   [http-client access-token min-time max-time]
-  (->> {:method :get
-        :url "https://www.googleapis.com/calendar/v3/calendars/primary/events"
-        :query-params {:timeMin min-time
-                       :timeMax max-time
-                       :maxResults 10
-                       :singleEvents true
-                       :orderBy "startTime"}
-        :headers {"Authorization" (str "Bearer " access-token)}}
-       (protocols.http-client/req! http-client)
-       :body
-       in.adapter/wire->gcal))
+  (try
+    (->> {:method :get
+          :url "https://www.googleapis.com/calendar/v3/calendars/primary/events"
+          :query-params {:timeMin min-time
+                         :timeMax max-time
+                         :maxResults 10
+                         :Singleevents true
+                         :orderBy "startTime"}
+          :headers {"Authorization" (str "Bearer " access-token)}}
+         (protocols.http-client/req! http-client)
+         :body
+         in.adapter/wire->gcal)
+    (catch Exception e
+      (if (= 403 (-> (ex-data e) :common.http-client/cause :status))
+        (common.exceptions/forbidden "Google Calendar API access denied - insufficient permissions")
+        (common.exceptions/bad-gateway "Unable to fetch calendar events")))))

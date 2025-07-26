@@ -114,8 +114,16 @@
              ~@(when else-clause
                  [:else `(match? ~(second else-clause) ~response)]))))))
 
-(defn http-failure-injected-to? [url method]
-  (-> @*injected-faults* (get-in [url method]) some?))
+(defn indicates-matches?
+  [expected actual]
+  (matcher-combinators.core/indicates-match?
+   (matcher-combinators.core/match expected actual)))
+
+(defn http-failure-injected-to?
+  ([url method]
+   (-> @*injected-faults* (get-in [url method]) some?))
+  ([url method expected]
+   (indicates-matches? expected (get-in @*injected-faults* [url method]))))
 
 (defn request-made-to? [url method]
   (flow/flow "request-made-to?>"

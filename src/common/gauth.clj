@@ -1,5 +1,6 @@
 (ns common.gauth
   (:require [com.stuartsierra.component :as component]
+            [common.exceptions]
             [common.protocols.config :as protocols.config]
             [common.protocols.gauth :as protocols.gauth])
   (:import [com.google.auth.oauth2 UserCredentials]))
@@ -7,10 +8,10 @@
 (defrecord GoogleAuthTokenProvider []
   component/Lifecycle
   protocols.gauth/TokenProvider
-  
+
   (start [this] this)
   (stop [this] this)
-  
+
   (get-access-token [_ config]
     (let [client-id (protocols.config/read-value config :gcal-client-id)
           client-secret (protocols.config/read-value config :gcal-client-secret)
@@ -20,9 +21,12 @@
           _ (.setClientSecret creds client-secret)
           _ (.setRefreshToken creds refresh-token)
           user-creds (.build creds)]
-      (-> user-creds
-          .refreshAccessToken
-          .getTokenValue))))
+      (try
+        (-> user-creds
+            .refreshAccessToken
+            .getTokenValue)
+        (catch Exception e
+          (common.exceptions/unauthorized "Failed to authenticate with Google Calendar API - invalid or expired credentials" e))))))
 
 (defrecord MockTokenProvider [access-token]
   component/Lifecycle
