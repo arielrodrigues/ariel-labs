@@ -4,7 +4,7 @@
             [common.test :as common-test]
             [smart-mirror.adapters.in :as in.adapter]
             [smart-mirror.adapters.out :as out.adapter]
-            [smart-mirror.integration.setup :refer [defflow defflow-quickcheck]]
+            [smart-mirror.integration.setup :refer [defflow-quickcheck]]
             [smart-mirror.specs.in :as in]
             [smart-mirror.specs.out :as out]
             [state-flow.api :as flow :refer [flow]]
@@ -29,7 +29,7 @@
               [response (common-test/request :get "/api/weather"
                                              :headers {"Accept" "application/json"})]
 
-              (flow "THEN it must respond successfully if no faults were injected. Or return an error otherwise."
+              (flow "THEN it must respond successfully if no faults were injected. Or return the expected error otherwise."
                     (common-test/match-case? response
 
                                              :no-faults-injected
@@ -39,6 +39,12 @@
                                                             (-> (:body mock-open-meteo-forecast-response)
                                                                 in.adapter/wire->weather-forecast
                                                                 out.adapter/weather-forecast->wire))))
+
+                                             (common-test/http-failure-injected-to? ipinfo-endpoint :get)
+                                             {:status 502}
+
+                                             (common-test/http-failure-injected-to? open-meteo-forecast-endpoint :get)
+                                             {:status 502}
 
                                              :else
                                              {:status 500})

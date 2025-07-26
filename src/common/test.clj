@@ -86,17 +86,12 @@
     (flow/flow (str message)
           (state-flow.matchers/match? expected actual))))
 
-(defn indicates-match? [expected actual]
-  (matcher-combinators.core/indicates-match? (matcher-combinators.core/match expected actual)))
-
 (defmacro match-case?
   [response & clauses]
   `(let [faults-injected?# @common-test/*injected-faults*
          partitions# (partition 2 '~clauses)
          no-faults-injected-clause# (filter (fn [[cond#]] (= :no-faults-injected cond#)) partitions#)
-         else-clause# (filter (fn [[cond#]] (= :else cond#)) partitions#)
-         other-clauses# (filter (fn [[cond#]] (and (not= cond# :no-faults-injected)
-                                                   (not= cond# :else))) partitions#)]
+         else-clause# (filter (fn [[cond#]] (= :else cond#)) partitions#)]
 
      (cond
        (not= (count no-faults-injected-clause#) 1)
@@ -109,13 +104,15 @@
        ~(let [[_ matcher] (first (filter (fn [[cond]] (= :no-faults-injected cond)) (partition 2 clauses)))]
           `(match? ~matcher ~response))
 
-       (some (fn [[cond#]] (indicates-match? cond# faults-injected?#)) other-clauses#)
-       ~(let [[_ matcher] (first (filter (fn [[cond]] (and (not= cond :no-faults-injected) (not= cond :else))) (partition 2 clauses)))]
-          `(match? ~matcher ~response))
-
        :else
-       ~(let [[_ matcher] (first (filter (fn [[cond]] (= :else cond)) (partition 2 clauses)))]
-          `(match? ~matcher ~response)))))
+       ~(let [other-clauses (filter (fn [[cond]] (and (not= cond :no-faults-injected) (not= cond :else))) (partition 2 clauses))
+              else-clause (first (filter (fn [[cond]] (= :else cond)) (partition 2 clauses)))]
+          `(cond
+             ~@(mapcat (fn [[condition matcher]]
+                         [condition `(match? ~matcher ~response)])
+                       other-clauses)
+             ~@(when else-clause
+                 [:else `(match? ~(second else-clause) ~response)]))))))
 
 (defn http-failure-injected-to? [url method]
   (-> @*injected-faults* (get-in [url method]) some?))

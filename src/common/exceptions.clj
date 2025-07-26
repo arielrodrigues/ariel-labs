@@ -12,3 +12,9 @@
                   (merge
                    {:exception-type :bad-request}
                    args))))
+
+(defn bad-gateway [msg & args]
+  (throw (ex-info (json/write-str {:message msg})
+                  (merge
+                   {:exception-type :bad-gateway}
+                   args))))
