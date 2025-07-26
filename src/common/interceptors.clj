@@ -62,6 +62,12 @@
                   [{:exception-type :not-found}]
                   (assoc context :response {:status 404 :body (-> ex Throwable->map :cause)})
 
+                  [{:exception-type :timeout}]
+                  (assoc context :response {:status 408 :body (-> ex Throwable->map :cause)})
+
+                  [{:exception-type :internal-server-error}]
+                  (assoc context :response {:status 500 :body (-> ex Throwable->map :cause)})
+
                   [{:exception-type :bad-gateway}]
                   (assoc context :response {:status 502 :body (-> ex Throwable->map :cause)})
 

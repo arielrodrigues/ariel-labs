@@ -30,3 +30,15 @@
                   (merge
                    {:exception-type :forbidden}
                    args))))
+
+(defn timeout [msg & args]
+  (throw (ex-info (json/write-str {:message msg})
+                  (merge
+                   {:exception-type :timeout}
+                   args))))
+
+(defn internal-server-error [msg & args]
+  (throw (ex-info (json/write-str {:message msg})
+                  (merge
+                   {:exception-type :internal-server-error}
+                   args))))

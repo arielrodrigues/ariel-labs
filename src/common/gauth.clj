@@ -31,12 +31,24 @@
 (defrecord MockTokenProvider [access-token]
   component/Lifecycle
   protocols.gauth/TokenProvider
-  
-  (start [this] this)
-  (stop [this] this)
-  
-  (get-access-token [_ _]
-    access-token))
+
+  (start [this]
+    (assoc this :*faults* (atom {})))
+  (stop [this]
+    (dissoc this :*faults*))
+
+  (get-access-token [this _]
+    (if-let [fault (get @(:*faults* this) :get-access-token)]
+      (cond
+        (= :timeout (:type fault))
+        (common.exceptions/unauthorized "Token request timeout")
+
+        (= :unauthorized (:type fault))
+        (common.exceptions/unauthorized "Token provider authentication failed")
+
+        :else
+        (common.exceptions/internal-server-error "Token provider: Generic error"))
+      access-token)))
 
 (defn new-google-auth-token-provider []
   (->GoogleAuthTokenProvider))

@@ -49,8 +49,15 @@
    {:status 500 :body {:message "internal server error"}}
    {:status 503 :body {:message "service unavailable"}}])
 
+(def token-provider-faults
+  [{:type :timeout}
+   {:type :unauthorized}])
+
 (defn- gen-random-http-fault []
   (gen/elements http-faults))
+
+(defn- gen-random-token-fault []
+  (gen/elements token-provider-faults))
 
 (def ^:dynamic *injected-faults* (atom {}))
 (def default-fault-injection-likelihood 0.1)
@@ -69,13 +76,27 @@
                     [method response]))
                 methods+responses)]))
 
+(defn- maybe-inject-token-provider-fault!
+  []
+  (let [fault (gen/generate (gen-random-token-fault))]
+    (swap! *injected-faults* assoc :token-provider fault)
+    fault))
+
 (defn inject-faults! []
   (reset! *injected-faults* {})
   (flow/flow "inject-fauls!>"
-             [http-responses (flow/get-state (comp :*responses* :http-client :system))]
+             [http-responses (flow/get-state (comp :*responses* :http-client :system))
+              token-provider-faults (flow/get-state (comp :*faults* :token-provider :system))]
+
+             ;; Inject http faults
              (-> http-responses
                  (reset! (map-kv maybe-inject-fault! @http-responses))
-                 flow/return)))
+                 flow/return)
+
+             ;; Inject token provider faults
+             (->> (maybe-inject-token-provider-fault!)
+                  (swap! token-provider-faults assoc :get-access-token)
+                  flow/return)))
 
 (defn match? [expected actual]
   (let [message (if (empty? @*injected-faults*)
@@ -124,6 +145,12 @@
    (-> @*injected-faults* (get-in [url method]) some?))
   ([url method expected]
    (indicates-matches? expected (get-in @*injected-faults* [url method]))))
+
+(defn token-provider-fault-injected?
+  ([]
+   (-> @*injected-faults* (get :token-provider) some?))
+  ([fault-type]
+   (= fault-type (-> @*injected-faults* (get :token-provider) :type))))
 
 (defn request-made-to? [url method]
   (flow/flow "request-made-to?>"

@@ -32,6 +32,12 @@
                                                             (-> (:body mock-calendar-response)
                                                                 in.adapter/wire->gcal))))
 
+                                             (common-test/token-provider-fault-injected? :timeout)
+                                             {:status 401}
+
+                                             (common-test/token-provider-fault-injected? :unauthorized)
+                                             {:status 401}
+
                                              (common.test/http-failure-injected-to? google-calendar-endpoint :get {:status 403})
                                              {:status 403}
 
