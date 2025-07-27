@@ -82,21 +82,30 @@
     (swap! *injected-faults* assoc :google-auth-token-provider fault)
     fault))
 
-(defn inject-faults! []
-  (reset! *injected-faults* {})
-  (flow/flow "inject-fauls!>"
-             [http-responses (flow/get-state (comp :*responses* :http-client :system))
-              google-auth-token-provider-faults (flow/get-state (comp :*faults* :google-auth-token-provider :system))]
+(defn inject-faults!
+  ([]
+   (inject-faults! [:all]))
+  ([fault-types]
+   (reset! *injected-faults* {})
+   (let [should-inject-http? (some #{:http :all} fault-types)
+         should-inject-token-provider? (some #{:google-auth-token-provider :all} fault-types)]
+     (flow/flow "inject-faults!>"
+                [http-responses (flow/get-state (comp :*responses* :http-client :system))
+                 google-auth-token-provider-faults (flow/get-state (comp :*faults* :google-auth-token-provider :system))]
 
-             ;; Inject http faults
-             (-> http-responses
-                 (reset! (map-kv maybe-inject-fault! @http-responses))
-                 flow/return)
+                ;; Inject http faults conditionally
+                (if should-inject-http?
+                  (-> http-responses
+                      (reset! (map-kv maybe-inject-fault! @http-responses))
+                      flow/return)
+                  (flow/return nil))
 
-             ;; Inject google auth token provider faults
-             (->> (maybe-inject-token-provider-fault!)
-                  (swap! google-auth-token-provider-faults assoc :get-access-token)
-                  flow/return)))
+                ;; Inject google auth token provider faults conditionally
+                (if should-inject-token-provider?
+                  (->> (maybe-inject-token-provider-fault!)
+                       (swap! google-auth-token-provider-faults assoc :get-access-token)
+                       flow/return)
+                  (flow/return nil))))))
 
 (defn match? [expected actual]
   (let [message (if (empty? @*injected-faults*)
@@ -146,7 +155,7 @@
   ([url method expected]
    (indicates-matches? expected (get-in @*injected-faults* [url method]))))
 
-(defn fault-injected-to-token-provider?
+(defn fault-injected-to-google-auth-token-provider?
   ([]
    (-> @*injected-faults* (get :google-auth-token-provider) some?))
   ([fault-type]

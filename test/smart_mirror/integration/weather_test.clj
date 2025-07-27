@@ -23,7 +23,7 @@
   (flow "GIVEN that both IPInfo and Open Meteo forecast endpoints might be up and health (Faults might be injected)."
         (common-test/add-responses! {ipinfo-endpoint {:get mock-ipinfo-response}})
         (common-test/add-responses! {open-meteo-forecast-endpoint {:get mock-open-meteo-forecast-response}})
-        (common-test/inject-faults!)
+        (common-test/inject-faults! [:http])
 
         (flow "WHEN a get weather forecast request is made."
               [response (common-test/request :get "/api/weather"
@@ -45,14 +45,6 @@
 
                                              (common-test/http-fault-injected-to? open-meteo-forecast-endpoint :get)
                                              {:status 502}
-
-                                             (common-test/fault-injected-to-token-provider?)
-                                             (fn [{:keys [body]}]
-                                               (and (nil? (s/explain-data ::out/weather-forecast body))
-                                                    (match? body
-                                                            (-> (:body mock-open-meteo-forecast-response)
-                                                                in.adapter/wire->weather-forecast
-                                                                out.adapter/weather-forecast->wire))))
 
                                              :else
                                              {:status 500})
