@@ -17,7 +17,7 @@
 
 (def open-meteo-forecast-endpoint "https://api.open-meteo.com/v1/forecast")
 
-(defflow-quickcheck get-weather-forecast
+(defflow-quickcheck get-weather-forecast {}
   [mock-open-meteo-forecast-response (gen/fmap (fn [forecast] {:status 200 :body forecast})
                                                (s/gen ::in/weather-forecast))]
   (flow "GIVEN that both IPInfo and Open Meteo forecast endpoints might be up and health (Faults might be injected)."

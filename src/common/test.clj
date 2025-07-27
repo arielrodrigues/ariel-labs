@@ -55,82 +55,76 @@
 
 
 ;; Seed coordination for reproducible tests
-(def ^:dynamic *test-seed* nil)
-(def ^:dynamic *test-rng* nil)
-
 (defn get-test-seed []
-  (or *test-seed* 
-      (when-let [seed-prop (System/getProperty "test.seed")]
+  (or (when-let [seed-prop (System/getProperty "test.seed")]
         (Long/parseLong seed-prop))
       (System/currentTimeMillis)))
-
-(defn with-test-seed [seed f]
-  (binding [*test-seed* seed
-            *test-rng* (java.util.Random. seed)]
-    (f)))
 
 (def ^:dynamic *injected-faults* (atom {}))
 (def default-fault-injection-likelihood 0.1)
 
 ;; Deterministic randomness for reproducible tests
-(defn- deterministic-fault-choice [choices]
-  (let [rng (or *test-rng* (java.util.Random.))]
-    (nth choices (.nextInt rng (count choices)))))
+(defn- deterministic-fault-choice [rng choices]
+  (nth choices (.nextInt rng (count choices))))
 
-(defn- deterministic-fault-probability []
-  (let [rng (or *test-rng* (java.util.Random.))]
-    (.nextDouble rng)))
+(defn- deterministic-fault-probability [rng]
+  (.nextDouble rng))
 
-(defn- should-inject-fault? [likelihood]
-  (< (deterministic-fault-probability) likelihood))
+(defn- should-inject-fault? [rng likelihood]
+  (< (deterministic-fault-probability rng) likelihood))
 
-(defn- inject-fault-to-endpoint! [url methods+responses]
-  (let [fault (deterministic-fault-choice http-faults)
+(defn- inject-fault-to-endpoint! [rng url methods+responses]
+  (let [fault (deterministic-fault-choice rng http-faults)
         faulted-responses (into {} (map (fn [[method _]] [method fault]) methods+responses))]
     (swap! *injected-faults* deep-merge {url faulted-responses})
     [url faulted-responses]))
 
-(defn- maybe-inject-fault!
-  ([url methods+responses]
-   (maybe-inject-fault! url methods+responses default-fault-injection-likelihood))
-  ([url methods+responses likelihood]
-   (if (should-inject-fault? likelihood)
-     (inject-fault-to-endpoint! url methods+responses)
+(defn- maybe-inject-fault-to-endpoint!
+  ([rng url methods+responses]
+   (maybe-inject-fault-to-endpoint! rng url methods+responses default-fault-injection-likelihood))
+  ([rng url methods+responses likelihood]
+   (if (should-inject-fault? rng likelihood)
+     (inject-fault-to-endpoint! rng url methods+responses)
      [url methods+responses])))
 
 (defn- maybe-inject-token-provider-fault!
-  []
-  (let [fault (deterministic-fault-choice token-provider-faults)]
-    (swap! *injected-faults* assoc :google-auth-token-provider fault)
-    fault))
+  [rng]
+  (when (should-inject-fault? rng default-fault-injection-likelihood)
+    (let [fault (deterministic-fault-choice rng token-provider-faults)]
+      (swap! *injected-faults* assoc :google-auth-token-provider fault)
+      fault)))
 
 (defn inject-faults!
   ([]
    (inject-faults! [:all]))
   ([fault-types]
    (reset! *injected-faults* {})
-   (let [seed (get-test-seed)
-         should-inject-http? (some #{:http :all} fault-types)
-         should-inject-token-provider? (some #{:google-auth-token-provider :all} fault-types)]
-     (println "Fault injection using seed:" seed)
-     (with-test-seed seed
-       #(flow/flow "inject-faults!>"
-                   [http-responses (flow/get-state (comp :*responses* :http-client :system))
-                    google-auth-token-provider-faults (flow/get-state (comp :*faults* :google-auth-token-provider :system))]
+   (flow/flow "inject-faults!>"
+              [test-seed (flow/get-state :test-seed)
+               http-responses (flow/get-state (comp :*responses* :http-client :system))
+               google-auth-token-provider-faults (flow/get-state (comp :*faults* :google-auth-token-provider :system))]
+              (let [rng (java.util.Random. test-seed)
+                    should-inject-http? (some #{:http :all} fault-types)
+                    should-inject-token-provider? (some #{:google-auth-token-provider :all} fault-types)]
+                (println "Fault injection using seed:" test-seed)
+                (flow/flow "fault-injection>"
+                           ;; Inject http faults conditionally
+                           (if should-inject-http?
+                             (-> http-responses
+                                 (reset! (map-kv (fn [url methods+responses]
+                                                   (maybe-inject-fault-to-endpoint! rng url methods+responses))
+                                                 @http-responses))
+                                 flow/return)
+                             (flow/return nil))
 
-                   ;; Inject http faults conditionally
-                   (if should-inject-http?
-                     (-> http-responses
-                         (reset! (map-kv maybe-inject-fault! @http-responses))
-                         flow/return)
-                     (flow/return nil))
-
-                   ;; Inject google auth token provider faults conditionally
-                   (if should-inject-token-provider?
-                     (->> (maybe-inject-token-provider-fault!)
-                          (swap! google-auth-token-provider-faults assoc :get-access-token)
-                          flow/return)
-                     (flow/return nil)))))))
+                           ;; Inject google auth token provider faults conditionally
+                           (if should-inject-token-provider?
+                             (if-let [fault (maybe-inject-token-provider-fault! rng)]
+                               (do
+                                 (swap! google-auth-token-provider-faults assoc :get-access-token fault)
+                                 (flow/return fault))
+                               (flow/return nil))
+                             (flow/return nil)))))))
 
 (defn match? [expected actual]
   (let [message (if (empty? @*injected-faults*)

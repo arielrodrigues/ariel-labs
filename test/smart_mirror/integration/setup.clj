@@ -1,15 +1,18 @@
 (ns smart-mirror.integration.setup
   (:require [clojure.test]
             [clojure.test.check :as tc]
-            [clojure.test.check.clojure-test :refer [defspec]]
             [clojure.test.check.properties :as prop]
+            [common.test :as common-test]
             [smart-mirror.system :as system]
             [state-flow.api :as flow]
             [state-flow.cljtest]))
 
 (defn build-initial-state
-  []
-  {:system (system/create-and-start-system! system/test-system-map)})
+  ([]
+   (build-initial-state (common-test/get-test-seed)))
+  ([seed]
+   {:system (system/create-and-start-system! system/test-system-map)
+    :test-seed seed}))
 
 (defmacro defflow
   "Starts the test system before running state-flow tests"
@@ -19,23 +22,30 @@
      ~@body))
 
 (defmacro defflow-quickcheck
-  [test-name bindings & flow-body]
-  `(clojure.test/deftest ~test-name
-     (let [property# (clojure.test.check.properties/for-all
-                      ~bindings
-                      (try
-                        (let [[ret# state#] (state-flow.api/run* {:init build-initial-state}
-                                                                 (state-flow.api/flow ~(str test-name) ~@flow-body))
-                              assertions#   (get-in (meta state#) [:test-report :assertions])
-                              all-passed?#  (every? #(= :pass (:type %)) assertions#)]
-                          (doseq [assertion-data# assertions#]
-                            (clojure.test/report (#'state-flow.cljtest/clojure-test-report assertion-data#)))
-                          all-passed?#)
-                        (catch Throwable t#
-                          (clojure.test/do-report
-                           {:type     :error
-                            :message  (str "Exception in property-based state-flow: " (.getMessage t#))
-                            :expected true
-                            :actual   t#})
-                          false)))]
-       (tc/quick-check 100 property#))))
+  [test-name options bindings & flow-body]
+  (let [default-num-tests 100
+        num-tests (or (:num-tests options) default-num-tests)]
+    `(clojure.test/deftest ~test-name
+       (let [test-seed# (or ~(:seed options) (common-test/get-test-seed))
+             iteration-counter# (atom 0)
+             _# (println "Seed:" test-seed#)
+             property# (clojure.test.check.properties/for-all
+                        ~bindings
+                        (try
+                          (let [iteration# (swap! iteration-counter# inc)
+                                iteration-seed# (+ test-seed# iteration#)
+                                [ret# state#] (state-flow.api/run* {:init #(build-initial-state iteration-seed#)}
+                                                                   (state-flow.api/flow ~(str test-name) ~@flow-body))
+                                assertions#   (get-in (meta state#) [:test-report :assertions])
+                                all-passed?#  (every? #(= :pass (:type %)) assertions#)]
+                            (doseq [assertion-data# assertions#]
+                              (clojure.test/report (#'state-flow.cljtest/clojure-test-report assertion-data#)))
+                            all-passed?#)
+                          (catch Throwable t#
+                            (clojure.test/do-report
+                             {:type     :error
+                              :message  (str "Exception in property-based state-flow: " (.getMessage t#))
+                              :expected true
+                              :actual   t#})
+                            false)))]
+         (tc/quick-check ~num-tests property# :seed test-seed#)))))
