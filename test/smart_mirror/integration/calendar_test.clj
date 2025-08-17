@@ -10,7 +10,7 @@
 
 (def google-calendar-endpoint "https://www.googleapis.com/calendar/v3/calendars/primary/events")
 
-(defflow-quickcheck get-calendar-events-integration
+(defflow-quickcheck get-calendar-events-integration {}
   [mock-calendar-response (gen/fmap (fn [calendar] {:status 200 :body calendar})
                                     (s/gen ::in/calendar))]
 
