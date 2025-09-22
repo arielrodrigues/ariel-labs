@@ -118,30 +118,40 @@
                    ::daily]))
 
 ;; calendar
-(s/def ::summary string?)
-(s/def ::description string?)
-(s/def ::status string?)
+(s/def ::summary (s/with-gen string? #(gen/elements ["Meeting" "Appointment" "Call" "Event"])))
+(s/def ::description (s/with-gen (s/nilable string?) #(gen/frequency [[1 (gen/return nil)] [1 (gen/return "Important meeting")]])))
+(s/def ::status (s/with-gen string? #(gen/elements ["accepted" "tentative" "declined"])))
 
 ;; Start and end can contain dateTime or date (depending on all-day vs timed events)
-(s/def ::date string?)       ;; e.g., "2025-06-03"
-(s/def ::dateTime string?)   ;; e.g., "2025-06-03T10:00:00Z"
-(s/def ::timeZone string?)
+(s/def ::date (s/with-gen string? #(gen/fmap (fn [[month day]] (format "2025-%02d-%02d" month day)) (gen/tuple (gen/choose 1 12) (gen/choose 1 28)))))
+(s/def ::dateTime (s/with-gen string? #(gen/fmap (fn [[month day hour]] (format "2025-%02d-%02dT%02d:00:00Z" month day hour)) (gen/tuple (gen/choose 1 12) (gen/choose 1 28) (gen/choose 9 17)))))
+(s/def ::timeZone (s/with-gen string? #(gen/elements ["UTC" "America/New_York" "Europe/London"])))
 
-(s/def ::event-time
-  (s/keys :opt-un [::date ::dateTime ::timeZone]))
+(s/def ::all-day-event-time
+  (s/with-gen (s/keys :req-un [::date])
+    #(gen/fmap (fn [[month day]] {:date (format "2025-%02d-%02d" month day)})
+               (gen/tuple (gen/choose 1 12) (gen/choose 1 28)))))
+
+(s/def ::timed-event-time
+  (s/with-gen (s/keys :req-un [::dateTime] :opt-un [::timeZone])
+    #(gen/fmap (fn [[month day hour tz]] {:dateTime (format "2025-%02d-%02dT%02d:00:00Z" month day hour) :timeZone tz})
+               (gen/tuple (gen/choose 1 12) (gen/choose 1 28) (gen/choose 9 17) (gen/elements ["UTC" "America/New_York" "Europe/London"])))))
+
+(s/def ::event-time (s/or :all-day ::all-day-event-time
+                          :timed ::timed-event-time))
 
 (s/def ::start ::event-time)
 (s/def ::end ::event-time)
 
 (s/def ::event
-  (s/keys :opt-un [::summary
-                   ::description
+  (s/keys :req-un [::summary
                    ::start
                    ::end
-                   ::status]))
+                   ::status]
+          :opt-un [::description]))
 
-(s/def ::items (s/coll-of ::event))
+(s/def ::items (s/coll-of ::event :min-count 1 :gen-max 3))
 
 (s/def ::calendar
-  (s/keys :opt-un [::summary
-                   ::items]))
+  (s/keys :req-un [::items]
+          :opt-un [::summary]))

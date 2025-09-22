@@ -4,6 +4,7 @@
             [clojure.test.check.clojure-test :refer [defspec]]
             [clojure.test.check.properties :as prop]
             [smart-mirror.adapters.out :as out.adapter]
+            [smart-mirror.calendar :as calendar]
             [smart-mirror.specs.out :as out]
             [smart-mirror.weather :as weather]))
 
@@ -12,3 +13,9 @@
                 (is (s/valid?
                      ::out/weather-forecast
                      (out.adapter/weather-forecast->wire internal-model)))))
+
+(defspec calendar->wire--spec-conforms 50
+  (prop/for-all [internal-model (s/gen ::calendar/calendar)]
+                (is (s/valid?
+                     ::out/calendar
+                     (out.adapter/calendar->wire internal-model)))))

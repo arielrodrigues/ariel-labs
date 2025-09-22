@@ -96,3 +96,32 @@
                    ::hourly
                    ::daily
                    ::weather/default-units]))
+
+;; calendar
+(s/def ::owner string?)
+(s/def ::summary string?)
+(s/def ::description (s/nilable string?))
+(s/def ::status string?)
+
+(s/def ::date string?)
+(s/def ::date-time string?)
+(s/def ::time-zone (s/nilable string?))
+
+(s/def ::event-time
+  (s/keys :opt-un [::date ::date-time ::time-zone]))
+
+(s/def ::start ::event-time)
+(s/def ::end ::event-time)
+
+(s/def ::event
+  (s/keys :req-un [::summary
+                   ::status
+                   ::start
+                   ::end]
+          :opt-un [::description]))
+
+(s/def ::events (s/coll-of ::event))
+
+(s/def ::calendar
+  (s/keys :req-un [::events]
+          :opt-un [::owner]))

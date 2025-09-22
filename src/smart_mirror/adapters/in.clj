@@ -63,11 +63,19 @@
              :default-units weather/default-units})
 
 (defn- wire->event-time
-  [{:keys [date dateTime timeZone]}]
-  (assoc-some
-   #::calendar{:time-zone timeZone}
-   :date date
-   :date-time dateTime))
+  [event-time]
+  (if (vector? event-time)
+    (let [[_tag event-time-data] event-time
+          {:keys [date dateTime timeZone]} event-time-data]
+      (assoc-some
+       #::calendar{:time-zone timeZone}
+       ::calendar/date date
+       ::calendar/date-time dateTime))
+    (let [{:keys [date dateTime timeZone]} event-time]
+      (assoc-some
+       #::calendar{:time-zone timeZone}
+       ::calendar/date date
+       ::calendar/date-time dateTime))))
 
 (s/fdef wire->gcal-event
   :args (s/cat :wire-event ::in/event)

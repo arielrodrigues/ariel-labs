@@ -4,7 +4,7 @@
             [smart-mirror.integration.setup :refer [defflow-quickcheck]]
             [state-flow.api :refer [flow match?]]))
 
-(defflow-quickcheck ariel-test
+(defflow-quickcheck ariel-test {}
   [x (s/gen pos-int?)
    y (s/gen pos-int?)]
   (flow "x + y should be bigger than x and than y (for pos int)"

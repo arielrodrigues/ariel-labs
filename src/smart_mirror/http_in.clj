@@ -19,7 +19,8 @@
   [{{:keys [http-client config google-auth-token-provider]} :components}]
   {:status 200
    :body (-> http-client
-             (controller/gcal-events config (time/now) google-auth-token-provider))})
+             (controller/gcal-events config (time/now) google-auth-token-provider)
+             out.adapter/calendar->wire)})
 
 (def routes
   ["/time" {:get {:handler time-handler}}
