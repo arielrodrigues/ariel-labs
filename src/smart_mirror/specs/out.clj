@@ -125,3 +125,21 @@
 (s/def ::calendar
   (s/keys :req-un [::events]
           :opt-un [::owner]))
+
+;; time
+(s/def ::utc-offset string?)
+(s/def ::name string?)
+(s/def ::abbreviation string?)
+(s/def ::timezone (s/keys :req-un [::name ::abbreviation]))
+(s/def ::date-time string?)
+(s/def ::timestamp number?)
+(s/def ::weekend? boolean?)
+
+(s/def ::time
+  (s/keys :req-un [::utc-offset
+                   ::timezone
+                   ::date-time
+                   ::timestamp
+                   ::weekend?]))
+
+(s/def ::times (s/coll-of ::time))

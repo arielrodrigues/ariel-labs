@@ -2,6 +2,7 @@
   (:require [clojure.spec.alpha :as s]
             [smart-mirror.calendar :as calendar]
             [smart-mirror.specs.out :as out]
+            [smart-mirror.time :as time]
             [smart-mirror.weather :as weather]))
 
 (defn- ->unamespaced
@@ -50,3 +51,19 @@
   [{::calendar/keys [owner events]}]
   (cond-> {:events (map event->wire events)}
     owner (assoc :owner owner)))
+
+(defn- time->wire
+  [{::time/keys [utc-offset timezone date-time timestamp weekend?]}]
+  {:utc-offset utc-offset
+   :timezone {:name (:name timezone)
+              :abbreviation (:abbreviation timezone)}
+   :date-time date-time
+   :timestamp timestamp
+   :weekend? weekend?})
+
+(s/fdef times->wire
+  :args (s/cat :times (s/coll-of ::time/time))
+  :ret ::out/times)
+(defn times->wire
+  [times]
+  (map time->wire times))

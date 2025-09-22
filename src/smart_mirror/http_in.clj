@@ -6,7 +6,8 @@
 (defn time-handler
   [{{:keys [include]} :query-params}]
    {:status 200
-    :body (controller/now include (time/now))})
+    :body (-> (controller/now include (time/now))
+              out.adapter/times->wire)})
 
 (defn weather-handler
   [{{:keys [http-client]} :components}]

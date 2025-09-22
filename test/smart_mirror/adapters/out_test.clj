@@ -6,6 +6,7 @@
             [smart-mirror.adapters.out :as out.adapter]
             [smart-mirror.calendar :as calendar]
             [smart-mirror.specs.out :as out]
+            [smart-mirror.time :as time]
             [smart-mirror.weather :as weather]))
 
 (defspec weather-forecast->wire--spec-conforms 50
@@ -19,3 +20,9 @@
                 (is (s/valid?
                      ::out/calendar
                      (out.adapter/calendar->wire internal-model)))))
+
+(defspec times->wire--spec-conforms 50
+  (prop/for-all [internal-model (s/gen (s/coll-of ::time/time :min-count 1 :gen-max 3))]
+                (is (s/valid?
+                     ::out/times
+                     (out.adapter/times->wire internal-model)))))
