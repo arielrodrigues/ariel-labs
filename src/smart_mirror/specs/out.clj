@@ -152,15 +152,15 @@
 (s/def ::water-frequency-days pos-int?)
 (s/def ::last-watered (s/nilable string?)) 
 (s/def ::notes (s/nilable string?))
-(s/def ::location string?)
+(s/def ::location (s/nilable string?))
 (s/def ::type string?) 
 (s/def ::next-watering (s/nilable string?))
 (s/def ::days-overdue (s/nilable number?))
 
 (s/def ::plant-response
-  (s/keys :req-un [::id ::name ::water-frequency-days ::location]
+  (s/keys :req-un [::id ::name ::water-frequency-days]
           :opt-un [::scientific-name ::pic-url ::last-watered ::notes
-                   ::type ::next-watering ::days-overdue]))
+                   ::location ::type ::next-watering ::days-overdue]))
 
 (s/def ::plants-response (s/coll-of ::plant-response))
 

@@ -157,8 +157,8 @@
                                                                                  :water-frequency-days 7)))]
 
         (flow "When checking plants due endpoint"
-              [{:keys [status body]} (common-test/request :get "/api/plants/needs-watering"
+              [{:keys [status body]} (common-test/request :get "/api/plants/need-watering"
                                                           :headers {"Accept" "application/json"})]
               (flow "Then the endpoint responds correctly"
                     (match? 200 status)
-                    (match? nil? body)))))
+                    (match? nil? (s/explain-data ::out/plants-response body))))))

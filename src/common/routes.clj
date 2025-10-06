@@ -5,7 +5,8 @@
             [com.stuartsierra.component :as component]
             [common.interceptors]
             [common.system]
-            [io.pedestal.http.route :as io.route]))
+            [io.pedestal.http.route :as io.route]
+            [io.pedestal.http.route.definition.table :as table]))
 
 (def valid-http-methods
   #{:get :post :put :patch :delete :options :head})
@@ -90,16 +91,46 @@
                     :common.interceptors/interceptors
                     ::path-params])))
 
+(defn- custom-dsl->terse-routes
+  "Convert custom DSL format to terse syntax format.
+   Transforms ['/path' {:get {:handler fn :name :route-name}}]
+   to terse format ['/path' {:get fn}] while preserving interceptors and metadata."
+  [routes common-interceptors]
+  (let [add-api-prefix (fn [path] (str "/api" path))
+        convert-method-map (fn [path method-map]
+                            (reduce-kv
+                             (fn [acc method {:keys [handler name constraints]}]
+                               (let [final-handler (if common-interceptors
+                                                    (conj common-interceptors handler)
+                                                    handler)
+                                     route-name (or name
+                                                    (-> method
+                                                        clojure.core/name
+                                                        clojure.string/upper-case
+                                                        (str (add-api-prefix path))
+                                                        keyword))]
+                                 (assoc acc method
+                                        (cond-> final-handler
+                                          constraints (with-meta {:route-name route-name :constraints constraints})
+                                          (not constraints) (with-meta {:route-name route-name})))))
+                             {}
+                             method-map))]
+    (->> routes
+         (partition 2)
+         (mapv (fn [[path method-map]]
+                 [(add-api-prefix path) (convert-method-map path method-map)])))))
+
 (s/fdef expand-routes!
   :args (s/cat :routes ::routes)
   :ret ::expanded-routes)
 (defn expand-routes!
   [routes]
+  ;; Use vector instead of set to preserve route ordering
   (->> routes
        (partition 2)
        (mapcat expand-routes!*)
-       set
-       io.route/expand-routes))
+       vec  ; Use vector instead of set to preserve ordering
+       table/table-routes))
 
 (defn- inject-common-interceptors
   [path-map common-interceptors]

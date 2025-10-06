@@ -17,10 +17,15 @@
                                   [])
                       route-path (first route-def)
                       route-methods (second route-def)
-                      expanded-route-def (common-routes/expand-routes! route-def)]
+                      expanded-route-def (common-routes/expand-routes! route-def)
+                      deduplicated-routes (->> routes
+                                               (partition 2)
+                                               (group-by first)
+                                               (mapcat (fn [[path method-maps]]
+                                                         [path (apply merge (map second method-maps))])))]
 
                   (testing "Given a well-formed routes collection. When expanded, Then the spec is respected"
-                    (is (s/valid? ::common-routes/expanded-routes (common-routes/expand-routes! routes))))
+                    (is (s/valid? ::common-routes/expanded-routes (common-routes/expand-routes! deduplicated-routes))))
 
                   (testing "Given an expanded-route, their :path matches the non-expanded form"
                     (is (every? #(= (str "/api" route-path) %) (map :path expanded-route-def))))

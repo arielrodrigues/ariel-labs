@@ -97,14 +97,14 @@
                     :handler get-plants-handler}
               :post {:name :create-plant
                      :handler create-plant-handler}}
-   "/plants/needs-watering" {:get {:handler get-plants-due-handler}}
+   "/plants/need-watering" {:get {:name :get-plants-due
+                                         :handler get-plants-due-handler}}
    "/plants/:id/water" {:post {:name :water-plant
                                :handler water-plant-handler}}
    "/plants/:id/history" {:get {:name :get-watering-history
                                 :handler get-watering-history-handler}}
    "/plants/:id" {:get {:name :get-plant
-                        :handler get-plant-handler
-                        :constraints {:id #"[0-9a-fA-F-]+"}}
+                        :handler get-plant-handler}
                   :put {:name :update-plant
                         :handler update-plant-handler}
                   :delete {:name :delete-plant

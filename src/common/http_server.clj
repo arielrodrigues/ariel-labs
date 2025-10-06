@@ -9,7 +9,8 @@
   (start [component]
     (let [service-map {::http/routes (:routes routes)
                        ::http/type :jetty
-                       ::http/port port}
+                       ::http/port port
+                       ::http/router :linear-search}
           instance (-> service-map
                        (assoc ::http/join? false)
                        http/create-server
@@ -32,7 +33,8 @@
   (start [component]
     (let [service-map {::http/routes (:routes routes)
                        ::http/type :jetty
-                       ::http/port port}
+                       ::http/port port
+                       ::http/router :linear-search}
           instance (-> service-map
                        io.pedestal.http/create-servlet
                        :io.pedestal.http/service-fn)]
