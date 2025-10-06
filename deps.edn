@@ -25,4 +25,5 @@
         nubank/matcher-combinators {:mvn/version "3.9.1"}
         http-kit/http-kit {:mvn/version "2.8.0"}
         dev.weavejester/medley {:mvn/version "1.8.1"}
-        com.google.auth/google-auth-library-oauth2-http {:mvn/version "1.21.0"}}}
+        com.google.auth/google-auth-library-oauth2-http {:mvn/version "1.21.0"}
+        com.datomic/local    {:mvn/version "1.0.291"}}}

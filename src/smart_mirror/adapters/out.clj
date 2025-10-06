@@ -1,6 +1,8 @@
 (ns smart-mirror.adapters.out
   (:require [clojure.spec.alpha :as s]
+            [medley.core :refer [assoc-some]]
             [smart-mirror.calendar :as calendar]
+            [smart-mirror.plants :as plants]
             [smart-mirror.specs.out :as out]
             [smart-mirror.time :as time]
             [smart-mirror.weather :as weather]))
@@ -67,3 +69,50 @@
 (defn times->wire
   [times]
   (map time->wire times))
+
+;; Plants
+(defn- instant->iso-string [inst] (when inst (.toString inst)))
+(defn- keyword->string [kw] (when kw (name kw)))
+(defn- uuid->string [uuid] (when uuid (str uuid)))
+
+(s/fdef plant->wire
+  :args (s/cat :plant ::plants/plant)
+  :ret ::out/plant-response)
+(defn plant->wire
+  [{::plants/keys [id name scientific-name pic-url water-frequency-days
+                   last-watered notes location type
+                   next-watering days-overdue]}]
+  (assoc-some {:id (uuid->string id)
+               :name name
+               :water-frequency-days water-frequency-days
+               :location location}
+              :scientific-name scientific-name
+              :pic-url pic-url
+              :last-watered (instant->iso-string last-watered)
+              :notes notes
+              :type (keyword->string type)
+              :next-watering (instant->iso-string next-watering)
+              :days-overdue days-overdue))
+
+(s/fdef plants->wire
+  :args (s/cat :plants ::plants/plants)
+  :ret ::out/plants-response)
+(defn plants->wire [plants] (map plant->wire plants))
+
+(s/fdef watering->wire
+  :args (s/cat :watering ::plants/watering)
+  :ret ::out/watering-response)
+(defn watering->wire
+  [{::plants/keys [watering-id plant-id watered-at watered-by
+                   watering-notes amount-ml]}]
+  (assoc-some {:watering-id (uuid->string watering-id)
+               :plant-id (uuid->string plant-id)
+               :watered-at (instant->iso-string watered-at)}
+              :watered-by watered-by
+              :watering-notes watering-notes
+              :amount-ml amount-ml))
+
+(s/fdef waterings->wire
+  :args (s/cat :waterings ::plants/waterings)
+  :ret ::out/waterings-response)
+(defn waterings->wire [waterings] (map watering->wire waterings))

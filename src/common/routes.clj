@@ -4,9 +4,7 @@
             [clojure.string]
             [com.stuartsierra.component :as component]
             [common.interceptors]
-            [common.interceptors :as common-interceptors]
             [common.system]
-            [common.system :as common-system]
             [io.pedestal.http.route :as io.route]))
 
 (def valid-http-methods
@@ -63,15 +61,18 @@
     (throw (Exception. (str "A handler is expected: " method " " path)))))
 
 (defn- path+method->pedestal-route!
-  [path [method {:keys [handler]}]]
+  [path [method {:keys [handler name constraints]}]]
   (check-route-contraints! path method handler)
   (let [prefixed-path (include-api-prefix-on-path path)
-        method+path (-> method
-                        name
-                        clojure.string/upper-case
-                        (str prefixed-path)
-                        keyword)]
-    [prefixed-path method handler :route-name method+path]))
+        route-name (or name
+                       (-> method
+                           clojure.core/name
+                           clojure.string/upper-case
+                           (str prefixed-path)
+                           keyword))]
+    (if (some? constraints)
+      [prefixed-path method handler :route-name route-name :constraints constraints]
+      [prefixed-path method handler :route-name route-name])))
 
 (defn- expand-routes!*
   [[path http-methods]]
@@ -92,7 +93,6 @@
 (s/fdef expand-routes!
   :args (s/cat :routes ::routes)
   :ret ::expanded-routes)
-
 (defn expand-routes!
   [routes]
   (->> routes
@@ -117,17 +117,23 @@
 
 ;; ---- component ----
 
-(defrecord Routes [routes components-name]
+(defrecord Routes [routes components-name validation-specs]
   component/Lifecycle
   (start [component]
-    (let [get-components (fn [] (select-keys @common-system/system components-name))]
+    (let [get-components (fn [] (select-keys @common.system/system components-name))
+          interceptors (if validation-specs
+                         (common.interceptors/common-interceptors-with-validation get-components validation-specs)
+                         (common.interceptors/common-interceptors get-components))]
       (assoc component :routes (-> routes
-                                   (->routes+common-interceptors
-                                    (common.interceptors/common-interceptors get-components))
+                                   (->routes+common-interceptors interceptors)
                                    expand-routes!))))
   (stop [component]
     (dissoc component :routes)))
 
 (defn new-routes
-  [routes components-name]
-  (map->Routes {:routes routes :components-name components-name}))
+  ([routes components-name]
+   (map->Routes {:routes routes :components-name components-name}))
+  ([routes components-name validation-specs]
+   (map->Routes {:routes routes
+                 :components-name components-name
+                 :validation-specs validation-specs})))

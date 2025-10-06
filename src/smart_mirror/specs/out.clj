@@ -143,3 +143,44 @@
                    ::weekend?]))
 
 (s/def ::times (s/coll-of ::time))
+
+;; Plants
+(s/def ::id string?)
+(s/def ::name string?)
+(s/def ::scientific-name (s/nilable string?))
+(s/def ::pic-url (s/nilable string?))
+(s/def ::water-frequency-days pos-int?)
+(s/def ::last-watered (s/nilable string?)) 
+(s/def ::notes (s/nilable string?))
+(s/def ::location string?)
+(s/def ::type string?) 
+(s/def ::next-watering (s/nilable string?))
+(s/def ::days-overdue (s/nilable number?))
+
+(s/def ::plant-response
+  (s/keys :req-un [::id ::name ::water-frequency-days ::location]
+          :opt-un [::scientific-name ::pic-url ::last-watered ::notes
+                   ::type ::next-watering ::days-overdue]))
+
+(s/def ::plants-response (s/coll-of ::plant-response))
+
+;; Watering
+(s/def ::watering-id string?)
+(s/def ::plant-id string?) 
+(s/def ::watered-at string?) 
+(s/def ::watered-by (s/nilable string?))
+(s/def ::watering-notes (s/nilable string?))
+(s/def ::amount-ml (s/nilable pos-int?))
+
+(s/def ::watering-response
+  (s/keys :req-un [::watering-id ::plant-id ::watered-at]
+          :opt-un [::watered-by ::watering-notes ::amount-ml]))
+
+(s/def ::waterings-response (s/coll-of ::watering-response))
+
+(s/def ::plant-id string?)
+(s/def ::watering-id string?)
+
+(s/def ::create-plant-response (s/keys :req-un [::plant-id]))
+(s/def ::update-plant-response (s/keys :req-un [::plant-id]))
+(s/def ::water-plant-response (s/keys :req-un [::watering-id]))

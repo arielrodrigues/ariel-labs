@@ -1,6 +1,7 @@
 (ns smart-mirror.specs.in
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
+            [clojure.string]
             [common.time]
             [smart-mirror.coordinates :as coordinates]
             [smart-mirror.time :as time]))
@@ -155,3 +156,30 @@
 (s/def ::calendar
   (s/keys :req-un [::items]
           :opt-un [::summary]))
+
+;; Plants
+
+;; Plant creation/update input
+(s/def ::name (s/and string? #(not (clojure.string/blank? %))))
+(s/def ::scientific-name (s/nilable string?))
+(s/def ::pic-url (s/nilable string?))
+(s/def ::water-frequency-days pos-int?)
+(s/def ::notes (s/nilable string?))
+(s/def ::location (s/and string? #(not (clojure.string/blank? %))))
+(s/def ::type #{"succulent" "tropical" "herb" "flowering" "fern" "cactus" "unknown"})
+
+(s/def ::create-plant-request
+  (s/keys :req-un [::name ::water-frequency-days ::location]
+          :opt-un [::scientific-name ::pic-url ::notes ::type]))
+
+(s/def ::update-plant-request
+  (s/keys :opt-un [::name ::scientific-name ::pic-url ::water-frequency-days
+                   ::notes ::location ::type]))
+
+;; Watering input
+(s/def ::watered-by (s/nilable string?))
+(s/def ::watering-notes (s/nilable string?))
+(s/def ::amount-ml (s/nilable pos-int?))
+
+(s/def ::water-plant-request
+  (s/keys :opt-un [::watered-by ::watering-notes ::amount-ml]))

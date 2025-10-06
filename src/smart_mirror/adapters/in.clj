@@ -1,7 +1,9 @@
 (ns smart-mirror.adapters.in
-  (:require [clojure.spec.alpha :as s]
+  (:require [clojure.set :as set]
+            [clojure.spec.alpha :as s]
             [medley.core :refer [assoc-some]]
             [smart-mirror.calendar :as calendar]
+            [smart-mirror.plants :as plants]
             [smart-mirror.specs.in :as in]
             [smart-mirror.weather :as weather]))
 
@@ -96,3 +98,42 @@
   [calendar]
   (merge {::calendar/owner (:summary calendar)}
          {::calendar/events (map wire->gcal-event (:items calendar))}))
+
+;; Plants
+
+(s/fdef wire->create-plant
+  :args (s/cat :request ::in/create-plant-request)
+  :ret ::plants/plant-input)
+(defn wire->create-plant
+  [payload]
+  (-> payload
+      (set/rename-keys {:name ::plants/name
+                        :water-frequency-days ::plants/water-frequency-days
+                        :location ::plants/location
+                        :scientific-name ::plants/scientific-name
+                        :pic-url ::plants/pic-url
+                        :notes ::plants/notes})
+      (assoc ::plants/type (keyword (get payload :type "unknown")))))
+
+(s/fdef wire->update-plant
+  :args (s/cat :request ::in/update-plant-request)
+  :ret ::plants/plant-updates)
+(defn wire->update-plant
+  [payload]
+  (-> payload
+      (set/rename-keys {:name ::plants/name
+                        :water-frequency-days ::plants/water-frequency-days
+                        :location ::plants/location
+                        :scientific-name ::plants/scientific-name
+                        :pic-url ::plants/pic-url
+                        :notes ::plants/notes
+                        :type ::plants/type})))
+
+(s/fdef wire->water-plant
+  :args (s/cat :request ::in/water-plant-request)
+  :ret ::plants/watering-input)
+(defn wire->water-plant
+  [request]
+  (set/rename-keys request {:watering-notes :plants/watering-notes
+                           :watered-by :plants/watered-by
+                           :amount-ml :plants/amount-ml}))
