@@ -1,3 +1,4 @@
 {:gcal-client-id ""
  :gcal-client-secret ""
- :gcal-refresh-token ""}
+ :gcal-refresh-token ""
+ :fcm-token ""}

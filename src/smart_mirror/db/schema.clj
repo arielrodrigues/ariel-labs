@@ -84,7 +84,29 @@
    {:db/ident :watering/amount-ml
     :db/valueType :db.type/long
     :db/cardinality :db.cardinality/one
-    :db/doc "Amount of water in milliliters"}])
+    :db/doc "Amount of water in milliliters"}
+
+   ;; notifications
+   {:db/ident :notification/id
+    :db/valueType :db.type/uuid
+    :db/cardinality :db.cardinality/one
+    :db/unique :db.unique/identity
+    :db/doc "Unique identifier for notifications"}
+
+   {:db/ident :notification/topic
+    :db/valueType :db.type/keyword
+    :db/cardinality :db.cardinality/one
+    :db/doc "Notification topic: :water-plants"}
+
+   {:db/ident :notification/sent-at
+    :db/valueType :db.type/instant
+    :db/cardinality :db.cardinality/one
+    :db/doc "Timestamp when the notification was sent"}
+
+   {:db/ident :notification/channel
+    :db/valueType :db.type/keyword
+    :db/cardinality :db.cardinality/one
+    :db/doc "Notification channel: :push"}])
 
 (defn install-schema [connection]
   (d/transact connection {:tx-data plant-schema}))

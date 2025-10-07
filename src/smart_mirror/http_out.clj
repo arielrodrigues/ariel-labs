@@ -54,3 +54,19 @@
       (if (= 403 (-> (ex-data e) :common.http-client/cause :status))
         (common.exceptions/forbidden "Google Calendar API access denied - insufficient permissions")
         (common.exceptions/bad-gateway "Unable to fetch calendar events")))))
+
+(defn send-notification!
+  [http-client token]
+  (try
+    (->> {:method :post
+          :body {:to "fake-client-token",
+                 :notification {:title "It's time to water your plants 💧"
+                                :body "Your plants are thirsty!"}}
+          :url "https://fcm.googleapis.com/fcm/send"
+          :headers {"Authorization" (str "key=" token)}}
+         (protocols.http-client/req! http-client)
+         :body)
+    (catch Exception e
+      (if (= 403 (-> (ex-data e) :common.http-client/cause :status))
+        (common.exceptions/forbidden "Firebase Cloud Message access denied")
+        (common.exceptions/bad-gateway "Unable to send push notification")))))

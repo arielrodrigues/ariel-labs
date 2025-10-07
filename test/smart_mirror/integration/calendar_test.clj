@@ -18,7 +18,7 @@
 
   (flow "GIVEN that the Google Calendar API endpoint might be up and healthy (Faults might be injected)."
         (common-test/add-responses! {google-calendar-endpoint {:get mock-calendar-response}})
-        (common-test/inject-faults! [:all])
+        (common-test/inject-faults! [:http :google-auth-token-provider])
 
         (flow "WHEN a get calendar events request is made."
               [response (common-test/request :get "/api/calendar"

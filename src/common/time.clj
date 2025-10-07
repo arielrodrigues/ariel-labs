@@ -88,6 +88,10 @@
     (.getTime date)
     (-> date jt/instant jt/to-millis-from-epoch)))
 
+(defn ->java-date
+  [args]
+  (java.util.Date/from (jt/instant args)))
+
 (defn days-between
   "Calculate days between two date objects"
   [date1 date2]

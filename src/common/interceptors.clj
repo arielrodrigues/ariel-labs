@@ -93,8 +93,7 @@
                   (assoc context :response {:status 502 :body (-> ex Throwable->map :cause)})
 
                   :else
-                  (do (print ex)
-                      (assoc context :response {:status 500 :body {:message "Internal server error."}}))))
+                  (assoc context :response {:status 500 :body {:message "Internal server error."}})))
 
 (defn pred-to-message
   "Convert spec predicates to human-readable messages"

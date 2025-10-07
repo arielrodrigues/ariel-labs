@@ -120,14 +120,13 @@
   :ret ::plants/plant-updates)
 (defn wire->update-plant
   [payload]
-  (-> payload
-      (set/rename-keys {:name ::plants/name
-                        :water-frequency-days ::plants/water-frequency-days
-                        :location ::plants/location
-                        :scientific-name ::plants/scientific-name
-                        :pic-url ::plants/pic-url
-                        :notes ::plants/notes
-                        :type ::plants/type})))
+  (cond-> (set/rename-keys payload {:name ::plants/name
+                                    :water-frequency-days ::plants/water-frequency-days
+                                    :location ::plants/location
+                                    :scientific-name ::plants/scientific-name
+                                    :pic-url ::plants/pic-url
+                                    :notes ::plants/notes})
+    (:type payload) (assoc ::plants/type (keyword (:type payload)))))
 
 (s/fdef wire->water-plant
   :args (s/cat :request ::in/water-plant-request)

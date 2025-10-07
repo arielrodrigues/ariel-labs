@@ -23,10 +23,11 @@
 
 (defmacro defflow-quickcheck
   [test-name options bindings & flow-body]
-  (let [default-num-tests 100
-        num-tests (or (:num-tests options) default-num-tests)]
+  (let [default-num-tests 100]
     `(clojure.test/deftest ~test-name
-       (let [test-seed# (or ~(:seed options) (common-test/get-test-seed))
+       (let [opts# ~options
+             test-seed# (or (:seed opts#) (common-test/get-test-seed))
+             num-tests# (or (:num-tests opts#) ~default-num-tests)
              iteration-counter# (atom 0)
              _# (println "Seed:" test-seed#)
              property# (clojure.test.check.properties/for-all
@@ -48,4 +49,4 @@
                               :expected true
                               :actual   t#})
                             false)))]
-         (tc/quick-check ~num-tests property# :seed test-seed#)))))
+         (tc/quick-check num-tests# property# :seed test-seed#)))))

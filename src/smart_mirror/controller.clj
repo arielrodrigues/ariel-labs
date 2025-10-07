@@ -1,5 +1,6 @@
 (ns smart-mirror.controller
   (:require [common.exceptions]
+            [common.protocols.config :as protocols.config]
             [common.protocols.gauth :as protocols.gauth]
             [smart-mirror.coordinates :as coordinates]
             [smart-mirror.db.plants :as db.plants]
@@ -66,9 +67,12 @@
 
   (db.plants/record-watering! database plant-id watering-data))
 
-(defn get-plants-due-for-watering
-  [database]
-  (db.plants/get-plants-due-today database))
+(defn plants-due-for-watering
+  [database http-client config as-of]
+  (let [fcm-token (protocols.config/read-value config :fcm-token)]
+    (when (some? (db.plants/get-plants-due-today database as-of))
+      (http-out/send-notification! http-client fcm-token)
+      (db.plants/register-notification! database as-of))))
 
 (defn get-watering-history
   [database plant-id]

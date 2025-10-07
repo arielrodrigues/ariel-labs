@@ -41,12 +41,10 @@
 (defn get-plant-handler
   [{{:keys [database]} :components
     {:keys [id]} :path-params}]
-  (let [plant (controller/get-plant database id)]
-    (if plant
-      {:status 200
-       :body (out.adapter/plant->wire plant)}
-      {:status 404
-       :body {:message "Plant not found"}})))
+  {:status 200
+   :body (->> id
+              (controller/get-plant database)
+              out.adapter/plant->wire)})
 
 (defn update-plant-handler
   [{{:keys [database]} :components
@@ -66,21 +64,15 @@
   [{{:keys [database]} :components
     {:keys [id]} :path-params
     watering-data :json-params}]
-  (try
-    (let [internal-data (in.adapter/wire->water-plant watering-data)
-          watering-id (controller/water-plant database id internal-data)]
-      {:status 201
-       :body {:watering-id watering-id}})
-    (catch Exception e
-      (println "ERROR in water-plant-handler:" (.getMessage e))
-      (.printStackTrace e)
-      {:status 500 :body {:message "Internal server error."}})))
+  (let [internal-data (in.adapter/wire->water-plant watering-data)
+        watering-id (controller/water-plant database id internal-data)]
+    {:status 201
+     :body {:watering-id watering-id}}))
 
-(defn get-plants-due-handler
-  [{{:keys [database]} :components}]
-  (let [plants (controller/get-plants-due-for-watering database)]
-    {:status 200
-     :body (out.adapter/plants->wire plants)}))
+(defn alert-plants-due-handler
+  [{{:keys [database http-client config]} :components}]
+  (controller/plants-due-for-watering database http-client config (time/now))
+  {:status 201})
 
 (defn get-watering-history-handler
   [{{:keys [database]} :components
@@ -98,7 +90,7 @@
               :post {:name :create-plant
                      :handler create-plant-handler}}
    "/plants/need-watering" {:get {:name :get-plants-due
-                                         :handler get-plants-due-handler}}
+                                 :handler alert-plants-due-handler}}
    "/plants/:id/water" {:post {:name :water-plant
                                :handler water-plant-handler}}
    "/plants/:id/history" {:get {:name :get-watering-history

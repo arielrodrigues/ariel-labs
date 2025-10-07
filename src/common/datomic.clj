@@ -4,6 +4,24 @@
             [common.protocols.database :as protocols.database]
             [datomic.client.api :as d]))
 
+(defn- check-fault [database operation]
+  (when-let [*faults* (:*faults* database)]
+    (get @*faults* operation)))
+
+(defn- throw-database-fault [fault]
+  (case (:type fault)
+    :connection-timeout
+    (throw (ex-info "Database connection timeout"
+                    {:cognitect.anomalies/category :cognitect.anomalies/unavailable}))
+
+    :transaction-conflict
+    (throw (ex-info "Transaction conflict detected"
+                    {:cognitect.anomalies/category :cognitect.anomalies/conflict}))
+
+    :query-timeout
+    (throw (ex-info "Query execution timeout"
+                    {:cognitect.anomalies/category :cognitect.anomalies/interrupted}))))
+
 (defrecord DatomicDatabase [config client connection]
   component/Lifecycle
   (start [this]
@@ -40,7 +58,7 @@
   (pull [this pattern entity-id]
     (d/pull (d/db connection) pattern entity-id)))
 
-(defrecord MockDatabase [config client connection db-name]
+(defrecord MockDatabase [config client connection db-name *faults*]
   component/Lifecycle
   (start [this]
     ;; Create a unique in-memory database for each test run
@@ -51,7 +69,7 @@
       (println "MockDatabase START: Creating database" db-name)
       (d/create-database client {:db-name db-name})
       (let [conn (d/connect client {:db-name db-name})]
-        (assoc this :client client :connection conn :db-name db-name))))
+        (assoc this :client client :connection conn :db-name db-name :*faults* (atom {})))))
 
   (stop [this]
     ;; Clean up by deleting the test database
@@ -64,29 +82,41 @@
           (println "MockDatabase STOP: Error deleting database" db-name ":" (.getMessage e))
           ;; Ignore cleanup errors
           nil)))
-    (assoc this :client nil :connection nil :db-name nil))
+    (assoc this :client nil :connection nil :db-name nil :*faults* nil))
 
   protocols.database/Database
   (get-connection [this]
     connection)
 
   (transact [this tx-data]
-    (d/transact connection {:tx-data tx-data}))
+    (if-let [fault (check-fault this :transact)]
+      (throw-database-fault fault)
+      (d/transact connection {:tx-data tx-data})))
 
   (query [this query]
-    (d/q {:query query :args [(d/db connection)]}))
+    (if-let [fault (check-fault this :query)]
+      (throw-database-fault fault)
+      (d/q {:query query :args [(d/db connection)]})))
 
   (query [this query arg1]
-    (d/q {:query query :args [(d/db connection) arg1]}))
+    (if-let [fault (check-fault this :query)]
+      (throw-database-fault fault)
+      (d/q {:query query :args [(d/db connection) arg1]})))
 
   (query [this query arg1 arg2]
-    (d/q {:query query :args [(d/db connection) arg1 arg2]}))
+    (if-let [fault (check-fault this :query)]
+      (throw-database-fault fault)
+      (d/q {:query query :args [(d/db connection) arg1 arg2]})))
 
   (entity [this entity-id]
-    (d/pull (d/db connection) '[*] entity-id))
+    (if-let [fault (check-fault this :entity)]
+      (throw-database-fault fault)
+      (d/pull (d/db connection) '[*] entity-id)))
 
   (pull [this pattern entity-id]
-    (d/pull (d/db connection) pattern entity-id)))
+    (if-let [fault (check-fault this :pull)]
+      (throw-database-fault fault)
+      (d/pull (d/db connection) pattern entity-id))))
 
 (defn new-datomic-database []
   (component/using

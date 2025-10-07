@@ -48,6 +48,14 @@
     [(get-else $ ?w :watering/notes "") ?notes]
     [(get-else $ ?w :watering/amount-ml 0) ?amount]])
 
+(def find-notifications
+  '[:find ?e ?notification-id ?topic ?sent-at ?channel
+    :where
+    [?e :notification/id ?notification-id]
+    [?e :notification/topic ?topic]
+    [?e :notification/sent-at ?sent-at]
+    [?e :notification/channel ?channel]])
+
 (defn days-between [date1 date2]
   (time/days-between date1 date2))
 
@@ -98,6 +106,15 @@
                    :watered-by (when (not= watered-by "") watered-by)
                    :watering-notes (when (not= notes "") notes)
                    :amount-ml (when (not= amount 0) amount)})
+       results))
+
+(defn db-results->notifications
+  [results]
+  (map (fn [[_entity-id notification-id topic sent-at channel]]
+         {:id notification-id
+          :topic topic
+          :sent-at sent-at
+          :channel channel})
        results))
 
 (s/fdef create-plant!
@@ -168,11 +185,10 @@
     (db-results->plants results)))
 
 (s/fdef get-plants-due-today
-  :args (s/cat :database any?)
+  :args (s/cat :database any? :as-of ::time/zoned-date-time)
   :ret ::plants/plants)
-(defn get-plants-due-today [database]
-  (let [now (time/now-as-date)
-        millis-now (time/->millis now)
+(defn get-plants-due-today [database as-of]
+  (let [millis-now (time/->millis as-of)
         results (protocols.database/query database find-plants-due-for-watering millis-now)]
     (map (fn [[entity-id plant-id name last-watered water-freq]]
            #::plants{:entity-id entity-id
@@ -181,7 +197,7 @@
                      :last-watered last-watered
                      :water-frequency-days water-freq
                      :days-overdue (when last-watered
-                                    (- (days-between last-watered now) water-freq))})
+                                     (- (days-between last-watered as-of) water-freq))})
          results)))
 
 (s/fdef record-watering!
@@ -217,3 +233,21 @@
   (when-let [plant-entity-id (ffirst (protocols.database/query database find-plant-by-id plant-id))]
     (let [results (protocols.database/query database find-watering-history-for-plant plant-entity-id)]
       (db-watering-results->waterings results))))
+
+(s/fdef register-notification!
+  :args (s/cat :database any? :as-of ::time/zoned-date-time)
+  :ret uuid?)
+(defn register-notification! [database as-of]
+  (let [notification-id (random-uuid)
+        base-data {:notification/id notification-id
+                   :notification/topic :notification/water-plants
+                   :notification/sent-at (time/->java-date as-of)
+                   :notification/channel :notification/push}
+        tx-data [base-data]]
+    (protocols.database/transact database tx-data)
+    notification-id))
+
+(defn get-notifications [database]
+  (-> database
+      (protocols.database/query find-notifications)
+      db-results->notifications))

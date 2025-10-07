@@ -1,7 +1,6 @@
 (ns common.test
   (:require [clojure.data.json :as json]
             [clojure.pprint]
-            [clojure.spec.gen.alpha :as gen]
             [io.pedestal.test :refer [response-for]]
             [matcher-combinators.core]
             [medley.core :refer [map-kv deep-merge]]
@@ -53,6 +52,11 @@
   [{:type :timeout}
    {:type :unauthorized}])
 
+(def database-faults
+  [{:type :connection-timeout}
+   {:type :transaction-conflict}
+   {:type :query-timeout}])
+
 
 ;; Seed coordination for reproducible tests
 (defn get-test-seed []
@@ -94,6 +98,13 @@
       (swap! *injected-faults* assoc :google-auth-token-provider fault)
       fault)))
 
+(defn- maybe-inject-database-fault!
+  [rng operation]
+  (when (should-inject-fault? rng default-fault-injection-likelihood)
+    (let [fault (deterministic-fault-choice rng database-faults)]
+      (swap! *injected-faults* assoc-in [:database operation] fault)
+      fault)))
+
 (defn inject-faults!
   ([]
    (inject-faults! [:all]))
@@ -102,10 +113,12 @@
    (flow/flow "inject-faults!>"
               [test-seed (flow/get-state :test-seed)
                http-responses (flow/get-state (comp :*responses* :http-client :system))
-               google-auth-token-provider-faults (flow/get-state (comp :*faults* :google-auth-token-provider :system))]
+               google-auth-token-provider-faults (flow/get-state (comp :*faults* :google-auth-token-provider :system))
+               database-faults (flow/get-state (comp :*faults* :database :system))]
               (let [rng (java.util.Random. test-seed)
                     should-inject-http? (some #{:http :all} fault-types)
-                    should-inject-token-provider? (some #{:google-auth-token-provider :all} fault-types)]
+                    should-inject-token-provider? (some #{:google-auth-token-provider :all} fault-types)
+                    should-inject-database? (some #{:database :all} fault-types)]
                 (println "Fault injection using seed:" test-seed)
                 (flow/flow "fault-injection>"
                            ;; Inject http faults conditionally
@@ -123,6 +136,15 @@
                                (do
                                  (swap! google-auth-token-provider-faults assoc :get-access-token fault)
                                  (flow/return fault))
+                               (flow/return nil))
+                             (flow/return nil))
+
+                           ;; Inject database faults conditionally
+                           (if should-inject-database?
+                             (do
+                               (doseq [operation [:transact :query :entity :pull]]
+                                 (when-let [fault (maybe-inject-database-fault! rng operation)]
+                                   (swap! database-faults assoc operation fault)))
                                (flow/return nil))
                              (flow/return nil)))))))
 
@@ -180,7 +202,20 @@
   ([fault-type]
    (= fault-type (-> @*injected-faults* (get :google-auth-token-provider) :type))))
 
+(defn database-fault-injected?
+  ([]
+   (-> @*injected-faults* (get :database) some?))
+  ([operation]
+   (-> @*injected-faults* (get-in [:database operation]) some?))
+  ([operation fault-type]
+   (= fault-type (-> @*injected-faults* (get-in [:database operation]) :type))))
+
 (defn request-made-to? [url method]
   (flow/flow "request-made-to?>"
-    [requests-log (flow/get-state (comp :*requests-log* :http-client :system))]
-    (-> @requests-log (get-in [url method]) some? flow/return)))
+             [requests-log (flow/get-state (comp :*requests-log* :http-client :system))]
+             (-> @requests-log (get-in [url method]) some? flow/return)))
+
+(defn with-database [f]
+  (flow/flow "with-database>"
+             [database (flow/get-state (comp :database :system))]
+             (flow/return (f database))))
